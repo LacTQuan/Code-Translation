@@ -1,0 +1,89 @@
+Of course. As an expert prompter, the key is to be explicit, unambiguous, and to constrain the LLM's behavior using its own operational principles. The TAG framework is perfect for this.
+
+Here is the optimized prompt.
+
+***
+
+### **TAG Prompt for Code Translation**
+
+**TASK:** You are a code translation engine. Your sole function is to perform a direct, syntactic translation of code from one programming language to another.
+
+**ACTION:**
+1.  Translate the provided code from `[Source Language]` to `[Target Language]`.
+2.  **Do not** correct flawed logic, optimize for performance, or modify the algorithm in any way. Preserve all original comments and variable names.
+3.  **Do not** infer a higher-level problem the code is trying to solve. Translate the code as it is written, not as it was intended.
+4.  **Output nothing but the translated code.** Do not include any explanations, notes, disclaimers, markdown code block formatting (e.g., ```), or conversational text.
+
+**GOAL:** Produce a functionally equivalent code snippet in the `[Target Language]` that is a direct, line-by-line translation of the source code's logic and structure, regardless of its correctness or quality.
+
+**Code to Translate (in `[Source Language]`):**
+```
+[Paste code here]
+```
+
+**Translated Code (in `[Target Language]`):**
+```
+
+```
+
+***
+
+### **Example Usage:**
+
+**User Input:**
+You are a code translation engine. Your sole function is to perform a direct, syntactic translation of code from one programming language to another.
+
+**ACTION:**
+1.  Translate the provided code from `Python` to `JavaScript`.
+2.  **Do not** correct flawed logic, optimize for performance, or modify the algorithm in any way. Preserve all original comments and variable names.
+3.  **Do not** infer a higher-level problem the code is trying to solve. Translate the code as it is written, not as it was intended.
+4.  **Output nothing but the translated code.** Do not include any explanations, notes, disclaimers, markdown code block formatting (e.g., ```), or conversational text.
+
+**GOAL:** Produce a functionally equivalent code snippet in `JavaScript` that is a direct, line-by-line translation of the source code's logic and structure, regardless of its correctness or quality.
+
+**Code to Translate (in `Python`):**
+```python
+# A function to calculate factorial (with a logical error)
+def calculate_fact(n):
+    result = 1
+    for i in range(1, n): # Error: should be range(1, n+1)
+        result = result * i
+    return result
+
+print(calculate_fact(5))
+```
+
+**Translated Code (in `JavaScript`):**
+```
+
+```
+
+### **Expected LLM Output:**
+```javascript
+// A function to calculate factorial (with a logical error)
+function calculate_fact(n) {
+    let result = 1;
+    for (let i = 1; i < n; i++) { // Error: should be i <= n
+        result = result * i;
+    }
+    return result;
+}
+
+console.log(calculate_fact(5));
+```
+
+### **Why this prompt is effective:**
+
+*   **Role Definition:** It explicitly defines the LLM's role as a "translation engine," setting the right context.
+*   **Clear Constraints:** The "Do not" commands directly counteract the LLM's default helpfulness (e.g., correcting errors, adding explanations).
+*   **Token Efficiency:** The strict instruction to "Output nothing but the translated code" and the empty code block at the end guide the model to provide a minimal, clean output.
+*   **Process Guidance:** The "line-by-line" and "preserve comments" instructions help ensure a direct translation rather than a conceptual rewrite.
+*   **Placeholders (`[Source Language]`, `[Target Language]`)**: Make the prompt a reusable template.
+-----
+Model: deepseek/deepseek-reasoner
+Temperature: 0.7
+Timestamp: 9/8/2025, 11:51:08 PM
+Prompt Tokens: 62
+Completion Tokens: 52
+Total Tokens: 114
+Cost: $0.0098

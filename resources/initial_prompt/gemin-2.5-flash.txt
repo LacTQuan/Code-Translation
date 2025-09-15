@@ -1,0 +1,63 @@
+Okay, as an expert LLM prompter, here is a TAG Prompt designed to meet your specific requirements for code translation, focusing on direct translation without logic correction or inference, and token efficiency.
+
+---
+
+```prompt
+[TASK]: Translate the provided source code from the specified 'Source Language' into the 'Target Language'.
+
+[ACTION]:
+1.  Identify the 'Source Language' and 'Target Language' from the input.
+2.  Perform a direct, syntactical translation of the 'Code' provided.
+3.  **DO NOT** correct any logical errors present in the source code; translate the syntax exactly as it is, even if it results in flawed logic in the target language.
+4.  **DO NOT** infer the intended problem or purpose of the code; translate the explicit instructions given without interpretation.
+5.  Preserve original variable names, function names, and comments where syntactically permissible in the target language.
+6.  Ensure the translation is a faithful, line-by-line equivalent where possible, reflecting the original's structure and behavior (including any bugs).
+
+[GOAL]: Return ONLY the translated code. Do not include any introductory or concluding remarks, explanations, or additional text.
+```
+
+---
+
+**How to use this prompt (for the user):**
+
+You would then feed this prompt to the LLM, followed by your specific code and language details, like this:
+
+```
+[TASK]: Translate the provided source code from the specified 'Source Language' into the 'Target Language'.
+
+[ACTION]:
+1.  Identify the 'Source Language' and 'Target Language' from the input.
+2.  Perform a direct, syntactical translation of the 'Code' provided.
+3.  **DO NOT** correct any logical errors present in the source code; translate the syntax exactly as it is, even if it results in flawed logic in the target language.
+4.  **DO NOT** infer the intended problem or purpose of the code; translate the explicit instructions given without interpretation.
+5.  Preserve original variable names, function names, and comments where syntactically permissible in the target language.
+6.  Ensure the translation is a faithful, line-by-line equivalent where possible, reflecting the original's structure and behavior (including any bugs).
+
+[GOAL]: Return ONLY the translated code. Do not include any introductory or concluding remarks, explanations, or additional text.
+
+Source Language: Python
+Target Language: Java
+Code:
+```python
+def sum_even_numbers(numbers):
+    total = 0
+    for num in numbers:
+        if num % 2 == 0:
+            total += num
+        else: # This branch is intentionally wrong if only even sum is desired
+            total -= num # Logic error: should not subtract odd numbers
+    return total
+
+my_list = [1, 2, 3, 4, 5]
+result = sum_even_numbers(my_list)
+print(result)
+```
+```
+-----
+Model: gemini/gemini-2.5-flash
+Temperature: 0.7
+Timestamp: 9/9/2025, 9:56:52 PM
+Prompt Tokens: 41
+Completion Tokens: 3444
+Total Tokens: 3485
+Cost: $0.0086

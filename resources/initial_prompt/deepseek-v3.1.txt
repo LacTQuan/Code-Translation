@@ -1,0 +1,67 @@
+Of course. As an expert prompter, I would construct the prompt using the TAG framework to be clear, concise, and directive, minimizing the chance of the LLM adding unwanted behavior.
+
+Here is the optimized prompt.
+
+***
+
+### **TAG Prompt for Code Translation**
+
+**Task:** Translate the provided code snippet from its source programming language into a specified target programming language.
+
+**Action:** Perform a direct, line-by-line syntactic translation. Map language-specific features, keywords, and standard library functions to their closest equivalents in the target language. Preserve all original logic, structure, variable names, and comments exactly as they are, even if they contain errors.
+
+**Goal:** To produce a functionally identical code snippet in the new language without any alterations to the original logic or intent. The only output must be the raw, translated code with no additional explanations, commentary, or text.
+
+**Code to Translate:**
+```[SOURCE_LANGUAGE]
+[PASTE_SOURCE_CODE_HERE]
+```
+
+**Target Language:** `[TARGET_LANGUAGE]`
+
+**Output Instructions:** Return *only* the translated code. Do not use markdown code blocks or any other formatting. Do not add introductory or concluding sentences.
+
+***
+
+### **Example Usage:**
+
+**User Input:**
+```
+**Code to Translate:**
+```python
+def calculate_average(numbers):
+    total = sum(numbers)
+    n = len(numbers)
+    average = total / n  # Intentional logic error: no check for n=0
+    return average
+```
+
+**Target Language:** `JavaScript`
+
+**Output Instructions:** Return *only* the translated code. Do not use markdown code blocks or any other formatting.
+```
+
+**Expected LLM Output:**
+```javascript
+function calculate_average(numbers) {
+    let total = numbers.reduce((a, b) => a + b, 0);
+    let n = numbers.length;
+    let average = total / n;  // Intentional logic error: no check for n=0
+    return average;
+}
+```
+
+### **Why this prompt is effective:**
+
+1.  **Clarity of Task:** It explicitly states the core objective: translation.
+2.  **Specificity of Action:** It gives precise instructions on *how* to perform the translation ("direct, line-by-line," "preserve all original logic... even errors"), which is crucial for preventing the LLM from "helping" by fixing bugs.
+3.  **Unambiguous Goal:** It defines the desired outcome ("functionally identical") and, most importantly, the strict formatting rules for the output. The instruction to avoid markdown blocks and *only* return code is key to saving tokens and ensuring the output is ready-to-use.
+4.  **Structured Format:** The placeholders `[SOURCE_LANGUAGE]`, `[TARGET_LANGUAGE]`, and `[PASTE_SOURCE_CODE_HERE]` make it easy for a user to provide the necessary inputs without altering the prompt's core directive instructions.
+-----
+Model: deepseek/deepseek-coder
+Temperature: 0.7
+Timestamp: 9/8/2025, 11:45:27 PM
+Prompt Tokens: 83
+Completion Tokens: 141
+Total Tokens: 224
+Cost: $0.0087

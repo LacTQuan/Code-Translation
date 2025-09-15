@@ -1,0 +1,21 @@
+# TASK
+You are an expert, literal code-to-code translator. Your task is to translate a code snippet from a specified source language to a specified target language.
+
+# ACTION
+1.  **Analyze:** Read the provided code written in `Python`.
+2.  **Translate:** Perform a direct, one-to-one translation of the code into `CafeObj`.
+3.  **Preserve Logic:** This is the most critical rule. Translate the logic *exactly* as it is written. Do not correct logical errors, bugs, or inefficiencies. The translated code must be the logical equivalent of the original, including any flaws.
+4.  **Do Not Infer:** Do not infer the programmer's intent or the problem the code is meant to solve. Focus solely on the provided syntax and structure.
+5.  **Format Output:** Your entire response must consist *only* of the raw, translated code. Omit all explanations, introductory phrases (like "Here is the code..."), concluding remarks, and markdown code fences.
+
+# GOAL
+Generate a pure code output in `CafeObj` that is a direct, literal translation of the source code's logic and structure, with no modifications or extraneous text.
+###
+
+Source Language: `Python`
+Target Language: `CafeObj`
+
+Source Code:
+```
+[YOUR CODE HERE]
+```

@@ -1,0 +1,268 @@
+fmod ASTAR is
+  protecting INT .
+  protecting BOOL .
+  protecting STRING .
+
+  sort Pos .
+  op pos : Int Int -> Pos [ctor] .
+  op x : Pos -> Int .
+  op y : Pos -> Int .
+  eq x(pos(I, J)) = I .
+  eq y(pos(I, J)) = J .
+
+  op addPos : Pos Pos -> Pos .
+  eq addPos(pos(A, B), pos(C, D)) = pos(A + C, B + D) .
+
+  op abs : Int -> Int .
+  eq abs(I) = if I < 0 then 0 - I else I fi .
+
+  sort IntList .
+  op nilIL : -> IntList [ctor] .
+  op icons : Int IntList -> IntList [ctor] .
+
+  sort IntListList .
+  op nilG : -> IntListList [ctor] .
+  op gcons : IntList IntListList -> IntListList [ctor] .
+
+  sort Grid .
+  subsort IntListList < Grid .
+
+  op lenIL : IntList -> Int .
+  eq lenIL(nilIL) = 0 .
+  eq lenIL(icons(I, IL)) = 1 + lenIL(IL) .
+
+  op lenRows : Grid -> Int .
+  eq lenRows(nilG) = 0 .
+  eq lenRows(gcons(IL, GL)) = 1 + lenRows(GL) .
+
+  op lenCols : Grid -> Int .
+  eq lenCols(nilG) = 0 .
+  eq lenCols(gcons(IL, GL)) = lenIL(IL) .
+
+  op nthIL : IntList Int -> Int .
+  eq nthIL(icons(I, IL), 0) = I .
+  eq nthIL(icons(I, IL), S) = nthIL(IL, S - 1) [owise] .
+
+  op nthRow : Grid Int -> IntList .
+  eq nthRow(gcons(IL, GL), 0) = IL .
+  eq nthRow(gcons(IL, GL), S) = nthRow(GL, S - 1) [owise] .
+
+  op gridAt : Grid Pos -> Int .
+  eq gridAt(G, pos(R, C)) = nthIL(nthRow(G, R), C) .
+
+  op inBounds : Grid Pos -> Bool .
+  eq inBounds(G, pos(R, C)) =
+    (0 <= R) and (R < lenRows(G)) and (0 <= C) and (C < lenCols(G)) .
+
+  sort Node .
+  sort MaybeNode .
+  op none : -> MaybeNode [ctor] .
+  op some : Node -> MaybeNode [ctor] .
+
+  op node : Pos Int Int Int MaybeNode -> Node [ctor] .
+  op mkNode : Pos Int Int MaybeNode -> Node .
+  eq mkNode(P, G, H, Par) = node(P, G, H, G + H, Par) .
+
+  op posOf : Node -> Pos .
+  op gOf : Node -> Int .
+  op hOf : Node -> Int .
+  op fOf : Node -> Int .
+  op parentOf : Node -> MaybeNode .
+  eq posOf(node(P, G, H, F, Pa)) = P .
+  eq gOf(node(P, G, H, F, Pa)) = G .
+  eq hOf(node(P, G, H, F, Pa)) = H .
+  eq fOf(node(P, G, H, F, Pa)) = F .
+  eq parentOf(node(P, G, H, F, Pa)) = Pa .
+
+  op ltNode : Node Node -> Bool .
+  eq ltNode(N1, N2) = fOf(N1) < fOf(N2) .
+
+  sort NodeList .
+  op nilNL : -> NodeList [ctor] .
+  op ncons : Node NodeList -> NodeList [ctor] .
+
+  sort PosList .
+  op nilPL : -> PosList [ctor] .
+  op pcons : Pos PosList -> PosList [ctor] .
+
+  op appendPL : PosList PosList -> PosList .
+  eq appendPL(nilPL, L) = L .
+  eq appendPL(pcons(P, PL), L) = pcons(P, appendPL(PL, L)) .
+
+  op reversePL : PosList -> PosList .
+  eq reversePL(nilPL) = nilPL .
+  eq reversePL(pcons(P, PL)) = appendPL(reversePL(PL), pcons(P, nilPL)) .
+
+  op inVisited : Pos PosList -> Bool .
+  eq inVisited(P, nilPL) = false .
+  eq inVisited(P, pcons(P, PL)) = true .
+  eq inVisited(P, pcons(Q, PL)) = inVisited(P, PL) [owise] .
+
+  op isSome : MaybeNode -> Bool .
+  eq isSome(none) = false .
+  eq isSome(some(N)) = true .
+
+  op getSome : MaybeNode -> Node .
+  eq getSome(some(N)) = N .
+
+  op dirs : -> PosList .
+  eq dirs = pcons(pos(1, 0), pcons(pos(0, 1), pcons(pos(-1, 0), pcons(pos(0, -1), nilPL)))) .
+
+  op getNeighbors : Node Grid -> NodeList .
+  op getNeighborsFromDirs : PosList Node Grid -> NodeList .
+  eq getNeighbors(N, G) = getNeighborsFromDirs(dirs, N, G) .
+
+  eq getNeighborsFromDirs(nilPL, N, G) = nilNL .
+  ceq getNeighborsFromDirs(pcons(D, DL), N, G) =
+    if inBounds(G, addPos(posOf(N), D)) and not (gridAt(G, addPos(posOf(N), D)) == -1)
+    then ncons(mkNode(addPos(posOf(N), D), 0, 0, none), getNeighborsFromDirs(DL, N, G))
+    else getNeighborsFromDirs(DL, N, G)
+    fi
+  if true .
+
+  op heuristic : Node Node -> Int .
+  eq heuristic(N, Goal) = abs(x(posOf(N)) - x(posOf(Goal))) + abs(y(posOf(N)) - y(posOf(Goal))) .
+
+  op setNodeCostsParent : Node Int Int Node -> Node .
+  eq setNodeCostsParent(Nei, GC, HC, Cur) = mkNode(posOf(Nei), GC, HC, some(Cur)) .
+
+  op findNodeInOpen : NodeList Pos -> MaybeNode .
+  eq findNodeInOpen(nilNL, P) = none .
+  eq findNodeInOpen(ncons(N, NL), P) =
+    if posOf(N) == P then some(N) else findNodeInOpen(NL, P) fi .
+
+  op appendNL : NodeList NodeList -> NodeList .
+  eq appendNL(nilNL, L) = L .
+  eq appendNL(ncons(N, NL), L) = ncons(N, appendNL(NL, L)) .
+
+  op pqPut : NodeList Node -> NodeList .
+  eq pqPut(L, N) = appendNL(L, ncons(N, nilNL)) .
+
+  op isEmpty : NodeList -> Bool .
+  eq isEmpty(nilNL) = true .
+  eq isEmpty(ncons(N, NL)) = false .
+
+  sort NodeOpenPair .
+  op pair : Node NodeList -> NodeOpenPair [ctor] .
+  op fstNode : NodeOpenPair -> Node .
+  op sndOpen : NodeOpenPair -> NodeList .
+  eq fstNode(pair(N, L)) = N .
+  eq sndOpen(pair(N, L)) = L .
+
+  op minNode : NodeList -> Node .
+  eq minNode(ncons(N, nilNL)) = N .
+  eq minNode(ncons(N1, ncons(N2, NL))) =
+    if ltNode(N1, minNode(ncons(N2, NL))) then N1 else minNode(ncons(N2, NL)) fi .
+
+  op removeByPosOnce : NodeList Pos -> NodeList .
+  eq removeByPosOnce(nilNL, P) = nilNL .
+  eq removeByPosOnce(ncons(N, NL), P) =
+    if posOf(N) == P then NL else ncons(N, removeByPosOnce(NL, P)) fi .
+
+  op getMin : NodeList -> NodeOpenPair .
+  eq getMin(L) = pair(minNode(L), removeByPosOnce(L, posOf(minNode(L)))) .
+
+  op replaceNodeByPos : NodeList Node -> NodeList .
+  eq replaceNodeByPos(nilNL, N) = nilNL .
+  eq replaceNodeByPos(ncons(N1, NL), N) =
+    if posOf(N1) == posOf(N) then ncons(N, NL) else ncons(N1, replaceNodeByPos(NL, N)) fi .
+
+  op processNeighbors : NodeList NodeList PosList Node Grid Node -> NodeList .
+  op handleNeighbor : Node NodeList PosList Node Grid Node Int Int MaybeNode NodeList -> NodeList .
+
+  eq processNeighbors(nilNL, Open, Vis, Cur, G, Goal) = Open .
+  eq processNeighbors(ncons(Nei, Ns), Open, Vis, Cur, Gr, Goal) =
+    if inVisited(posOf(Nei), Vis)
+    then processNeighbors(Ns, Open, Vis, Cur, Gr, Goal)
+    else handleNeighbor(
+           Nei, Open, Vis, Cur, Gr, Goal,
+           gOf(Cur) + gridAt(Gr, posOf(Nei)),
+           heuristic(Nei, Goal),
+           findNodeInOpen(Open, posOf(Nei)),
+           Ns)
+    fi .
+
+  eq handleNeighbor(Nei, Open, Vis, Cur, G, Goal, GC, HC, none, Ns) =
+    processNeighbors(Ns, pqPut(Open, setNodeCostsParent(Nei, GC, HC, Cur)), Vis, Cur, G, Goal) .
+
+  eq handleNeighbor(Nei, Open, Vis, Cur, G, Goal, GC, HC, some(Ex), Ns) =
+    if GC < gOf(Ex)
+    then processNeighbors(Ns, replaceNodeByPos(Open, setNodeCostsParent(Ex, GC, HC, Cur)), Vis, Cur, G, Goal)
+    else processNeighbors(Ns, Open, Vis, Cur, G, Goal)
+    fi .
+
+  op reconstructAcc : Node Node PosList -> PosList .
+  op reconstructPath : Node Node -> PosList .
+
+  eq reconstructAcc(Cur, Start, Acc) =
+    if isSome(parentOf(Cur)) and not (posOf(getSome(parentOf(Cur))) == posOf(Start))
+    then reconstructAcc(getSome(parentOf(Cur)), Start, pcons(posOf(getSome(parentOf(Cur))), Acc))
+    else appendPL(Acc, pcons(posOf(Start), nilPL))
+    fi .
+
+  eq reconstructPath(Goal, Start) =
+    reversePL(reconstructAcc(Goal, Start, pcons(posOf(Goal), nilPL))) .
+
+  sort SearchReturn .
+  op noneResult : -> SearchReturn [ctor] .
+  op someResult : PosList Int -> SearchReturn [ctor] .
+
+  op search : Grid Node Node -> SearchReturn .
+  op searchLoop : NodeList PosList Grid Node Node -> SearchReturn .
+
+  eq search(G, Start, Goal) = searchLoop(pqPut(nilNL, Start), nilPL, G, Start, Goal) .
+
+  eq searchLoop(Open, Vis, G, Start, Goal) =
+    if isEmpty(Open) then noneResult
+    else
+      if inVisited(posOf(fstNode(getMin(Open))), Vis)
+      then searchLoop(sndOpen(getMin(Open)), Vis, G, Start, Goal)
+      else
+        if posOf(fstNode(getMin(Open))) == posOf(Goal)
+        then someResult(reconstructPath(fstNode(getMin(Open)), Start), fOf(fstNode(getMin(Open))))
+        else
+          searchLoop(
+            processNeighbors(
+              getNeighbors(fstNode(getMin(Open)), G),
+              sndOpen(getMin(Open)),
+              pcons(posOf(fstNode(getMin(Open))), Vis),
+              fstNode(getMin(Open)),
+              G,
+              Goal),
+            pcons(posOf(fstNode(getMin(Open))), Vis),
+            G, Start, Goal)
+        fi
+      fi
+    fi .
+
+  op map_grid : -> Grid .
+  eq map_grid =
+    gcons(icons(0, icons(2, icons(-1, icons(0, icons(2, icons(6, icons(5, icons(5, icons(4, icons(6, nilIL)))))))))),
+    gcons(icons(5, icons(-1, icons(-1, icons(4, icons(1, icons(1, icons(1, icons(5, icons(3, icons(5, nilIL)))))))))),
+    gcons(icons(2, icons(6, icons(8, icons(-1, icons(5, icons(2, icons(8, icons(4, icons(0, icons(0, nilIL)))))))))),
+    gcons(icons(1, icons(0, icons(5, icons(5, icons(-1, icons(2, icons(2, icons(1, icons(0, icons(7, nilIL)))))))))),
+    gcons(icons(0, icons(6, icons(5, icons(0, icons(6, icons(6, icons(7, icons(6, icons(0, icons(1, nilIL)))))))))),
+    gcons(icons(4, icons(3, icons(8, icons(7, icons(3, icons(4, icons(8, icons(6, icons(4, icons(2, nilIL)))))))))),
+    gcons(icons(1, icons(3, icons(5, icons(2, icons(6, icons(2, icons(4, icons(6, icons(8, icons(1, nilIL)))))))))),
+    gcons(icons(2, icons(8, icons(0, icons(5, icons(7, icons(1, icons(6, icons(-1, icons(8, icons(1, nilIL)))))))))),
+    gcons(icons(7, icons(5, icons(0, icons(2, icons(4, icons(-1, icons(0, icons(3, icons(0, icons(5, nilIL)))))))))),
+    gcons(icons(3, icons(3, icons(6, icons(0, icons(6, icons(5, icons(7, icons(4, icons(6, icons(5, nilIL)))))))))),
+    nilG)))))))))) .
+
+  op start_node : -> Node .
+  eq start_node = mkNode(pos(0, 0), 0, 0, none) .
+
+  op goal_node : -> Node .
+  eq goal_node = mkNode(pos(9, 9), 0, 0, none) .
+
+  op main : -> SearchReturn .
+  eq main = search(map_grid, start_node, goal_node) .
+endfm
+--- Model: gpt-5
+--- Temperature: 1
+--- Response Time: 219578 ms
+--- Timestamp: 9/13/2025, 9:50:12 PM
+--- Prompt Tokens: 1520
+--- Completion Tokens: 13102
+--- Total Tokens: 14622
+--- Cost: $0.1329

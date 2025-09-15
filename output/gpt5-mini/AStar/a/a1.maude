@@ -1,0 +1,292 @@
+fmod ASTAR is
+  sorts Pos Node NodeOpt Queue Visited PosList Result Path State .
+  subsort PosList < Path .
+  /* Constructors */
+  op pos : Int Int -> Pos [ctor] .
+  op node : Pos Int Int Int NodeOpt -> Node [ctor] .
+  op none : -> NodeOpt [ctor] .
+  op some : Node -> NodeOpt [ctor] .
+  op nilq : -> Queue [ctor] .
+  op _;_ : Node Queue -> Queue [ctor assoc id: nilq] .
+  op nilv : -> Visited [ctor] .
+  op _;v_ : Pos Visited -> Visited [ctor assoc id: nilv] .
+  op nilp : -> PosList [ctor] .
+  op _;_ : Pos PosList -> PosList [ctor assoc id: nilp] .
+  op noneRes : -> Result [ctor] .
+  op res : PosList Int -> Result [ctor] .
+
+  /* Accessors */
+  op posOf : Node -> Pos .
+  op gcost : Node -> Int .
+  op hcost : Node -> Int .
+  op fcost : Node -> Int .
+  op parentOf : Node -> NodeOpt .
+
+  eq posOf(node(P, G, H, F, Pn)) = P .
+  eq gcost(node(P, G, H, F, Pn)) = G .
+  eq hcost(node(P, G, H, F, Pn)) = H .
+  eq fcost(node(P, G, H, F, Pn)) = F .
+  eq parentOf(node(P, G, H, F, Pn)) = Pn .
+
+  /* Queue operations */
+  op put : Node Queue -> Queue .
+  op isempty : Queue -> Bool .
+  op getHead : Queue -> Node .
+  op getTail : Queue -> Queue .
+
+  eq isempty(nilq) = true .
+  eq isempty(N;Qs) = false .
+  eq getHead(N;Qs) = N .
+  eq getTail(N;Qs) = Qs .
+
+  eq put(N, nilq) = N;nilq .
+  eq put(N, P;Qs) = if fcost(N) < fcost(P) then N;P;Qs else P; put(N, Qs) fi .
+
+  /* Visited membership */
+  op memberV : Pos Visited -> Bool .
+  eq memberV(P, nilv) = false .
+  eq memberV(P, P;vVs) = true .
+  eq memberV(P, Q;vVs) = memberV(P, vVs) [owise] .
+
+  /* Map values (hardcoded 10x10 grid) */
+  op mapVal : Pos -> Int .
+  /* Row 0 */
+  eq mapVal(pos(0,0)) = 0 .
+  eq mapVal(pos(0,1)) = 2 .
+  eq mapVal(pos(0,2)) = -1 .
+  eq mapVal(pos(0,3)) = 0 .
+  eq mapVal(pos(0,4)) = 2 .
+  eq mapVal(pos(0,5)) = 6 .
+  eq mapVal(pos(0,6)) = 5 .
+  eq mapVal(pos(0,7)) = 5 .
+  eq mapVal(pos(0,8)) = 4 .
+  eq mapVal(pos(0,9)) = 6 .
+  /* Row 1 */
+  eq mapVal(pos(1,0)) = 5 .
+  eq mapVal(pos(1,1)) = -1 .
+  eq mapVal(pos(1,2)) = -1 .
+  eq mapVal(pos(1,3)) = 4 .
+  eq mapVal(pos(1,4)) = 1 .
+  eq mapVal(pos(1,5)) = 1 .
+  eq mapVal(pos(1,6)) = 1 .
+  eq mapVal(pos(1,7)) = 5 .
+  eq mapVal(pos(1,8)) = 3 .
+  eq mapVal(pos(1,9)) = 5 .
+  /* Row 2 */
+  eq mapVal(pos(2,0)) = 2 .
+  eq mapVal(pos(2,1)) = 6 .
+  eq mapVal(pos(2,2)) = 8 .
+  eq mapVal(pos(2,3)) = -1 .
+  eq mapVal(pos(2,4)) = 5 .
+  eq mapVal(pos(2,5)) = 2 .
+  eq mapVal(pos(2,6)) = 8 .
+  eq mapVal(pos(2,7)) = 4 .
+  eq mapVal(pos(2,8)) = 0 .
+  eq mapVal(pos(2,9)) = 0 .
+  /* Row 3 */
+  eq mapVal(pos(3,0)) = 1 .
+  eq mapVal(pos(3,1)) = 0 .
+  eq mapVal(pos(3,2)) = 5 .
+  eq mapVal(pos(3,3)) = 5 .
+  eq mapVal(pos(3,4)) = -1 .
+  eq mapVal(pos(3,5)) = 2 .
+  eq mapVal(pos(3,6)) = 2 .
+  eq mapVal(pos(3,7)) = 1 .
+  eq mapVal(pos(3,8)) = 0 .
+  eq mapVal(pos(3,9)) = 7 .
+  /* Row 4 */
+  eq mapVal(pos(4,0)) = 0 .
+  eq mapVal(pos(4,1)) = 6 .
+  eq mapVal(pos(4,2)) = 5 .
+  eq mapVal(pos(4,3)) = 0 .
+  eq mapVal(pos(4,4)) = 6 .
+  eq mapVal(pos(4,5)) = 6 .
+  eq mapVal(pos(4,6)) = 7 .
+  eq mapVal(pos(4,7)) = 6 .
+  eq mapVal(pos(4,8)) = 0 .
+  eq mapVal(pos(4,9)) = 1 .
+  /* Row 5 */
+  eq mapVal(pos(5,0)) = 4 .
+  eq mapVal(pos(5,1)) = 3 .
+  eq mapVal(pos(5,2)) = 8 .
+  eq mapVal(pos(5,3)) = 7 .
+  eq mapVal(pos(5,4)) = 3 .
+  eq mapVal(pos(5,5)) = 4 .
+  eq mapVal(pos(5,6)) = 8 .
+  eq mapVal(pos(5,7)) = 6 .
+  eq mapVal(pos(5,8)) = 4 .
+  eq mapVal(pos(5,9)) = 2 .
+  /* Row 6 */
+  eq mapVal(pos(6,0)) = 1 .
+  eq mapVal(pos(6,1)) = 3 .
+  eq mapVal(pos(6,2)) = 5 .
+  eq mapVal(pos(6,3)) = 2 .
+  eq mapVal(pos(6,4)) = 6 .
+  eq mapVal(pos(6,5)) = 2 .
+  eq mapVal(pos(6,6)) = 4 .
+  eq mapVal(pos(6,7)) = 6 .
+  eq mapVal(pos(6,8)) = 8 .
+  eq mapVal(pos(6,9)) = 1 .
+  /* Row 7 */
+  eq mapVal(pos(7,0)) = 2 .
+  eq mapVal(pos(7,1)) = 8 .
+  eq mapVal(pos(7,2)) = 0 .
+  eq mapVal(pos(7,3)) = 5 .
+  eq mapVal(pos(7,4)) = 7 .
+  eq mapVal(pos(7,5)) = 1 .
+  eq mapVal(pos(7,6)) = 6 .
+  eq mapVal(pos(7,7)) = -1 .
+  eq mapVal(pos(7,8)) = 8 .
+  eq mapVal(pos(7,9)) = 1 .
+  /* Row 8 */
+  eq mapVal(pos(8,0)) = 7 .
+  eq mapVal(pos(8,1)) = 5 .
+  eq mapVal(pos(8,2)) = 0 .
+  eq mapVal(pos(8,3)) = 2 .
+  eq mapVal(pos(8,4)) = 4 .
+  eq mapVal(pos(8,5)) = -1 .
+  eq mapVal(pos(8,6)) = 0 .
+  eq mapVal(pos(8,7)) = 3 .
+  eq mapVal(pos(8,8)) = 0 .
+  eq mapVal(pos(8,9)) = 5 .
+  /* Row 9 */
+  eq mapVal(pos(9,0)) = 3 .
+  eq mapVal(pos(9,1)) = 3 .
+  eq mapVal(pos(9,2)) = 6 .
+  eq mapVal(pos(9,3)) = 0 .
+  eq mapVal(pos(9,4)) = 6 .
+  eq mapVal(pos(9,5)) = 5 .
+  eq mapVal(pos(9,6)) = 7 .
+  eq mapVal(pos(9,7)) = 4 .
+  eq mapVal(pos(9,8)) = 6 .
+  eq mapVal(pos(9,9)) = 5 .
+
+  /* Position equality */
+  op posEq : Pos Pos -> Bool .
+  eq posEq(pos(X1,Y1), pos(X2,Y2)) = (X1 == X2) and (Y1 == Y2) .
+
+  /* Heuristic: Manhattan distance */
+  op heuristic : Node Pos -> Int .
+  eq heuristic(node(pos(X1,Y1), G, H, F, Pn), pos(X2,Y2)) = (if X1 >= X2 then X1 - X2 else X2 - X1 fi) + (if Y1 >= Y2 then Y1 - Y2 else Y2 - Y1 fi) .
+
+  /* Get neighbors */
+  op getNeighbors : Node -> Queue .
+  eq getNeighbors(N) = getNeighborsDirs(N, 1, 0) ; getNeighborsDirs(N, 0, 1) ; getNeighborsDirs(N, -1, 0) ; getNeighborsDirs(N, 0, -1) [nonexec] .
+
+  op getNeighborsDirs : Node Int Int -> Queue .
+  eq getNeighborsDirs(node(pos(X,Y), G, H, F, Pn), DX, DY) =
+    let NX: Int = X + DX in
+    let NY: Int = Y + DY in
+    if (NX >= 0 and NX <= 9) and (NY >= 0 and NY <= 9) then
+      if mapVal(pos(NX,NY)) =/= -1 then node(pos(NX,NY), 0, 0, 0, none);nilq else nilq fi
+    else nilq fi .
+
+  /* Concatenate queues */
+  op _++_ : Queue Queue -> Queue .
+  eq nilq ++ Q2 = Q2 .
+  eq (N;Qs) ++ Q2 = N; (Qs ++ Q2) .
+
+  /* Find node in open */
+  op findNodeInOpen : Node Queue -> NodeOpt .
+  eq findNodeInOpen(N, nilq) = none .
+  eq findNodeInOpen(N, H;Qs) = if posEq(posOf(H), posOf(N)) then some(H) else findNodeInOpen(N, Qs) fi .
+
+  /* Update node: set g,h,f and parent */
+  op updateNode : Node Int Int Node -> Node .
+  eq updateNode(node(P, G0, H0, F0, Pn0), Gnew, Hnew, Curr) = node(P, Gnew, Hnew, Gnew + Hnew, some(Curr)) .
+
+  /* Replace node in queue with updated node (first occurrence) */
+  op replaceNodeInQueue : Node Queue Node -> Queue .
+  eq replaceNodeInQueue(N, nilq, NewN) = nilq .
+  eq replaceNodeInQueue(N, H;Qs, NewN) =
+    if posEq(posOf(H), posOf(N)) then NewN;Qs else H; replaceNodeInQueue(N, Qs, NewN) fi .
+
+  /* Reconstruct path */
+  op reconstruct_path : Node Node -> PosList .
+  op reconstruct_iter : Node Node PosList -> PosList .
+
+  eq reconstruct_path(Goal, Start) = reverse(reconstruct_iter(Goal, Start, posOf(Goal);nilp)) .
+
+  /* This intentionally only handles the case where parent is 'some' to mirror the Python code behavior */
+  eq reconstruct_iter(node(P, G, H, F, some(Parent)), Start, Path) =
+    if posEq(posOf(Parent), posOf(Start)) then
+      Path ; posOf(Start)
+    else
+      /* print statement in original: Backtracking from node: ... - modeled as no-op */
+      reconstruct_iter(Parent, Start, Path ; posOf(Parent))
+    fi .
+
+  /* No equation for reconstruct_iter when parent is none to mirror potential runtime error in Python */
+
+  /* Reverse a PosList */
+  op reverse : PosList -> PosList .
+  op reverse_acc : PosList PosList -> PosList .
+  eq reverse(L) = reverse_acc(L, nilp) .
+  eq reverse_acc(nilp, Acc) = Acc .
+  eq reverse_acc(P;Ps, Acc) = reverse_acc(Ps, P;Acc) .
+
+  /* Main search function */
+  op search : Queue Visited Node Node -> Result .
+  eq search(nilq, V, Start, Goal) = noneRes .
+  eq search(Q, V, Start, Goal) =
+    if isempty(Q) then noneRes
+    else
+      let Curr: Node = getHead(Q) in
+      let Rest: Queue = getTail(Q) in
+      if memberV(posOf(Curr), V) then
+        search(Rest, V, Start, Goal)
+      else
+        let V2: Visited = posOf(Curr);vV in
+        if posEq(posOf(Curr), posOf(Goal)) then
+          /* print f"Reached goal node: {current.parent.pos}" modeled as no-op */
+          res(reconstruct_path(Curr, Start), fcost(Curr))
+        else
+          /* process neighbors */
+          let Neighs: Queue = getNeighbors(Curr) in
+          search_process_neighbors(Neighs, Rest, V2, Start, Goal, Curr)
+        fi
+      fi
+    fi .
+
+  /* Process neighbors list */
+  op search_process_neighbors : Queue Queue Visited Node Node Node -> Result .
+  eq search_process_neighbors(nilq, Open, V, Start, Goal, Curr) = search(Open, V, Start, Goal) .
+  eq search_process_neighbors(N;Ns, Open, V, Start, Goal, Curr) =
+    if memberV(posOf(N), V) then
+      search_process_neighbors(Ns, Open, V, Start, Goal, Curr)
+    else
+      let Gnew: Int = gcost(Curr) + mapVal(posOf(N)) in
+      let Hnew: Int = heuristic(N, posOf(Goal)) in
+      let Existing: NodeOpt = findNodeInOpen(N, Open) in
+      if Existing =/= none then
+        /* If existing node has higher g, update it */
+        (if gcost(someToNode(Existing)) > Gnew then
+           let Updated: Node = updateNode(someToNode(Existing), Gnew, Hnew, Curr) in
+           let Open2: Queue = replaceNodeInQueue(someToNode(Existing), Open, Updated) in
+           search_process_neighbors(Ns, Open2, V, Start, Goal, Curr)
+         else
+           search_process_neighbors(Ns, Open, V, Start, Goal, Curr)
+         fi)
+      else
+        let NewN: Node = updateNode(N, Gnew, Hnew, Curr) in
+        let Open2: Queue = put(NewN, Open) in
+        search_process_neighbors(Ns, Open2, V, Start, Goal, Curr)
+      fi
+    fi .
+
+  /* Helper to extract Node from some(Node) */
+  op someToNode : NodeOpt -> Node .
+  eq someToNode(some(N)) = N .
+  /* No equation for someToNode(none) to reflect misuse if called on none */
+
+  /* Initial setup mimicking __main__ */
+  op startAStar : Result .
+  eq startAStar =
+    /* Create start and goal nodes */
+    let StartN: Node = node(pos(0,0), 0, 0, 0, none) in
+    let GoalN: Node = node(pos(9,9), 0, 0, 0, none) in
+    /* Initialize open with start */
+    let Open0: Queue = put(StartN, nilq) in
+    search(Open0, nilv, StartN, GoalN) .
+
+endfm

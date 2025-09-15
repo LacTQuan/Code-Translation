@@ -1,0 +1,197 @@
+mod PYTHON-TRANSLATION is
+  pr(INT) .
+  pr(FLOAT) .
+  pr(BOOL) .
+  pr(STRING) .
+  pr(LIST{Int}) .
+  pr(TUPLE{DataPoint, List{DataPoint}}) .
+
+  sorts Coordinate CoordList DataPoint DataPointOption DataPointList PQ BFSState PathResult .
+  subsort DataPoint < DataPointOption .
+  subsort CoordList < List{Coordinate} .
+  subsort DataPointList < List{DataPoint} .
+  subsort PQ < List{DataPoint} .
+
+  op nullDP : -> DataPointOption .
+  op nullResult : -> PathResult .
+  op dataPoint : Coordinate Float Float Float DataPointOption -> DataPoint .
+  op bfsState : PQ CoordList List{List{Int}} DataPoint DataPoint -> BFSState .
+  op pathResult : CoordList Float -> PathResult .
+  op _,_ : Int Int -> Coordinate .
+
+  op coordinates : DataPoint -> Coordinate .
+  op weight_a : DataPoint -> Float .
+  op weight_b : DataPoint -> Float .
+  op total_weight : DataPoint -> Float .
+  op predecessor : DataPoint -> DataPointOption .
+  op pending_queue : BFSState -> PQ .
+  op processed : BFSState -> CoordList .
+  op data_matrix : BFSState -> List{List{Int}} .
+  op initial_point : BFSState -> DataPoint .
+  op target_point : BFSState -> DataPoint .
+  op getCoord0 : Coordinate -> Int .
+  op getCoord1 : Coordinate -> Int .
+
+  eq coordinates(dataPoint(C, _, _, _, _)) = C .
+  eq weight_a(dataPoint(_, WA, _, _, _)) = WA .
+  eq weight_b(dataPoint(_, _, WB, _, _)) = WB .
+  eq total_weight(dataPoint(_, _, _, TW, _)) = TW .
+  eq predecessor(dataPoint(_, _, _, _, P)) = P .
+  eq pending_queue(bfsState(PQ, _, _, _, _)) = PQ .
+  eq processed(bfsState(_, P, _, _, _)) = P .
+  eq data_matrix(bfsState(_, _, DM, _, _)) = DM .
+  eq initial_point(bfsState(_, _, _, I, _)) = I .
+  eq target_point(bfsState(_, _, _, _, T)) = T .
+  eq getCoord0(C0, C1) = C0 .
+  eq getCoord1(C0, C1) = C1 .
+
+  op execute : BFSState -> PathResult .
+  op execute-loop : BFSState -> PathResult .
+  op process-adjacents : DataPointList DataPoint BFSState -> BFSState .
+  op calculate_sum : Coordinate DataPointList -> DataPointOption .
+  op reverse_string : DataPoint BFSState -> DataPointList .
+  op get-adjacents-aux : List{List{Int}} Coordinate BFSState -> DataPointList .
+  op swap_elements : DataPoint DataPoint -> Float .
+  op find_list : DataPoint DataPoint -> CoordList .
+  op find_list-iter : DataPoint DataPoint CoordList -> CoordList .
+  op insert_element : DataPoint Float Float DataPoint -> DataPoint .
+  op _in_ : Coordinate CoordList -> Bool .
+  op put : DataPoint PQ -> PQ .
+  op get : PQ -> Tuple{DataPoint, PQ} .
+  op empty? : PQ -> Bool .
+  op list : PQ -> DataPointList .
+  op update-pq : DataPoint PQ -> PQ .
+  op remove-from-pq : Coordinate PQ -> PQ .
+  op _[_] : List{List{Int}} Coordinate -> Int .
+  op shape0 : List{List{Int}} -> Int .
+  op shape1 : List{List{Int}} -> Int .
+  op reverse : CoordList -> CoordList .
+  op abs : Int -> Int .
+  op coordToString : Coordinate -> String .
+
+  vars C C0 C1 : Coordinate .
+  vars WA WB TW NWA NWB : Float .
+  vars P PRED : DataPoint .
+  vars DP : DataPoint .
+  vars DPO : DataPointOption .
+  vars PQ_ : PQ .
+  vars PROCESSED CL : CoordList .
+  vars DM : List{List{Int}} .
+  vars IP TP : DataPoint .
+  vars S : BFSState .
+  vars I J R : Int .
+  vars DPL : DataPointList .
+  vars DIR : List{Int} .
+  vars DIRL : List{List{Int}} .
+  var ACC : CoordList .
+
+  eq empty?(nil) = true .
+  eq empty?(DP PQ_) = false .
+  eq put(DP, nil) = DP .
+  ceq put(DP, P PQ_) = DP P PQ_ if total_weight(DP) < total_weight(P) .
+  ceq put(DP, P PQ_) = P put(DP, PQ_) if total_weight(DP) >= total_weight(P) .
+  eq get(DP PQ_) = < DP, PQ_ > .
+  eq list(PQ_) = PQ_ .
+  eq remove-from-pq(C, nil) = nil .
+  ceq remove-from-pq(C, DP PQ_) = PQ_ if coordinates(DP) == C .
+  ceq remove-from-pq(C, DP PQ_) = DP remove-from-pq(C, PQ_) if coordinates(DP) =/= C .
+  eq update-pq(DP, PQ_) = put(DP, remove-from-pq(coordinates(DP), PQ_)) .
+  eq C in nil = false .
+  eq C in (C0 CL) = (C == C0) or (C in CL) .
+  eq shape0(DM) = length(DM) .
+  eq shape1(nil) = 0 .
+  eq shape1(L :: LL) = length(L) .
+  eq DM[R, C] = nth(C, nth(R, DM)) .
+  eq reverse(nil) = nil .
+  eq reverse(C CL) = append(reverse(CL), C :: nil) .
+  eq abs(I) = if I < 0 then - I else I fi .
+  eq coordToString(I, J) = "(" + intToString(I) + ", " + intToString(J) + ")" .
+
+  eq execute(S) = execute-loop(bfsState(put(initial_point(S), pending_queue(S)), processed(S), data_matrix(S), initial_point(S), target_point(S))) .
+  ceq execute-loop(S) =
+    let current-element : DataPoint = get-first(get(pending_queue(S))) in
+    let new-pending-queue : PQ = get-second(get(pending_queue(S))) in
+    if coordinates(current-element) in processed(S) then
+      execute-loop(bfsState(new-pending-queue, processed(S), data_matrix(S), initial_point(S), target_point(S)))
+    else
+      let new-processed = processed(S) coordinates(current-element) in
+      if coordinates(current-element) == coordinates(target_point(S)) then
+        pathResult(find_list(current-element, initial_point(S)), total_weight(current-element))
+      else
+        let adjacent-elements : DataPointList = reverse_string(current-element, S) in
+        let s-prime : BFSState = bfsState(new-pending-queue, new-processed, data_matrix(S), initial_point(S), target_point(S)) in
+        execute-loop(process-adjacents(adjacent-elements, current-element, s-prime))
+      fi
+    fi
+  if not empty?(pending_queue(S)) .
+  eq execute-loop(S) = nullResult [owise] .
+
+  eq process-adjacents(nil, PRED, S) = S .
+  eq process-adjacents(DP DPL, PRED, S) =
+    if coordinates(DP) in processed(S) then
+      process-adjacents(DPL, PRED, S)
+    else
+      let weight-a = weight_a(PRED) + float(data_matrix(S)[getCoord0(coordinates(DP)), getCoord1(coordinates(DP))]) in
+      let weight-b = swap_elements(DP, target_point(S)) in
+      let existing-element = calculate_sum(coordinates(DP), list(pending_queue(S))) in
+      if existing-element =/= nullDP then
+        if weight-a < weight_a(existing-element) then
+            let updated-element = insert_element(existing-element, weight-a, weight-b, PRED) in
+            let new-pq = update-pq(updated-element, pending_queue(S)) in
+            process-adjacents(DPL, PRED, bfsState(new-pq, processed(S), data_matrix(S), initial_point(S), target_point(S)))
+        else
+            process-adjacents(DPL, PRED, S)
+        fi
+      else
+        let new-element = insert_element(DP, weight-a, weight-b, PRED) in
+        let new-pq = put(new-element, pending_queue(S)) in
+        process-adjacents(DPL, PRED, bfsState(new-pq, processed(S), data_matrix(S), initial_point(S), target_point(S)))
+      fi
+    fi .
+
+  eq calculate_sum(C, nil) = nullDP .
+  ceq calculate_sum(C, DP DPL) = DP if coordinates(DP) == C .
+  ceq calculate_sum(C, DP DPL) = calculate_sum(C, DPL) if coordinates(DP) =/= C .
+
+  eq reverse_string(DP, S) =
+    get-adjacents-aux((1 :: 0 :: nil) :: (0 :: 1 :: nil) :: (-1 :: 0 :: nil) :: (0 :: -1 :: nil) :: nil, coordinates(DP), S) .
+
+  eq get-adjacents-aux(nil, C, S) = nil .
+  eq get-adjacents-aux(DIR :: DIRL, C, S) =
+    let adjacent-coords = (getCoord0(C) + nth(0, DIR), getCoord1(C) + nth(1, DIR)) in
+    if (0 <= getCoord0(adjacent-coords)) and (getCoord0(adjacent-coords) < shape0(data_matrix(S))) and
+       (0 <= getCoord1(adjacent-coords)) and (getCoord1(adjacent-coords) < shape1(data_matrix(S))) then
+      if data_matrix(S)[getCoord0(adjacent-coords), getCoord1(adjacent-coords)] =/= -1 then
+        dataPoint(adjacent-coords, 0.0, 0.0, 0.0, nullDP) :: get-adjacents-aux(DIRL, C, S)
+      else
+        get-adjacents-aux(DIRL, C, S)
+      fi
+    else
+      get-adjacents-aux(DIRL, C, S)
+    fi .
+
+  eq swap_elements(DP, TP) =
+    float(abs(getCoord0(coordinates(DP)) - getCoord0(coordinates(TP))) + abs(getCoord1(coordinates(DP)) - getCoord1(coordinates(TP)))) .
+
+  eq find_list(DP, IP) =
+    reverse(append(find_list-iter(DP, IP, coordinates(DP) :: nil), coordinates(IP) :: nil)) .
+
+  ceq find_list-iter(DP, IP, ACC) =
+    let PRED-DP : DataPointOption = predecessor(DP) in
+    trace("Tracing back from: " + coordToString(coordinates(DP)) + " to predecessor: " + coordToString(coordinates(PRED-DP)) + " with weight: " + floatToString(total_weight(DP)),
+    find_list-iter(PRED-DP, IP, append(ACC, coordinates(PRED-DP) :: nil)))
+  if PRED-DP :: DataPoint and-then coordinates(PRED-DP) =/= coordinates(IP) .
+  eq find_list-iter(DP, IP, ACC) = ACC [owise] .
+
+  eq insert_element(DP, NWA, NWB, PRED) =
+    dataPoint(coordinates(DP), NWA, NWB, NWA + NWB, PRED) .
+endm
+
+--- Model: gemini/gemini-2.5-pro
+--- Temperature: 0.7
+--- Response Time: 200189 ms
+--- Timestamp: 9/9/2025, 11:43:19 PM
+--- Prompt Tokens: 1245
+--- Completion Tokens: 20891
+--- Total Tokens: 22136
+--- Cost: $0.2105

@@ -1,0 +1,133 @@
+mod PYTHON-TO-MAUDE is
+  including INT .
+  including FLOAT .
+  including STRING .
+
+  ops coordinates weight_a weight_b total_weight predecessor : -> Attribute .
+  op __init__ : -> PythonStmt .
+  op __lt__ : -> PythonStmt .
+  op execute : -> PythonStmt .
+  op calculate_sum : -> PythonStmt .
+  op reverse_string : -> PythonStmt .
+  op swap_elements : -> PythonStmt .
+  op find_list : -> PythonStmt .
+  op insert_element : -> PythonStmt .
+
+  op DataPoint : -> Class .
+  op BFS : -> Class .
+
+  op from queue import PriorityQueue : -> PythonStmt .
+  op class DataPoint: : -> PythonStmt .
+  op def __init__(self, coordinates: tuple, weight_a: float, weight_b: float): : -> PythonStmt .
+  op self.coordinates = coordinates : -> PythonStmt .
+  op self.weight_a = weight_a : -> PythonStmt .
+  op self.weight_b = weight_b : -> PythonStmt .
+  op self.total_weight = self.weight_a + self.weight_b : -> PythonStmt .
+  op self.predecessor = None : -> PythonStmt .
+  op def __lt__(self, other): : -> PythonStmt .
+  op return self.total_weight < other.total_weight : -> PythonStmt .
+
+  op class BFS: : -> PythonStmt .
+  op def __init__(self, data_matrix, initial_point, target_point): : -> PythonStmt .
+  op self.pending_queue = PriorityQueue() : -> PythonStmt .
+  op self.processed = [] : -> PythonStmt .
+  op self.data_matrix = data_matrix : -> PythonStmt .
+  op self.initial_point = initial_point : -> PythonStmt .
+  op self.target_point = target_point : -> PythonStmt .
+  op def execute(self): : -> PythonStmt .
+  op self.pending_queue.put(self.initial_point) : -> PythonStmt .
+  op while not self.pending_queue.empty(): : -> PythonStmt .
+  op current_element = self.pending_queue.get() : -> PythonStmt .
+  op if current_element.coordinates in self.processed: : -> PythonStmt .
+  op continue : -> PythonStmt .
+  op self.processed.append(current_element.coordinates) : -> PythonStmt .
+  op if current_element.coordinates == self.target_point.coordinates: : -> PythonStmt .
+  op return self.find_list(current_element), current_element.total_weight : -> PythonStmt .
+  op adjacent_elements = self.reverse_string(current_element) : -> PythonStmt .
+  op for element in adjacent_elements: : -> PythonStmt .
+  op if element.coordinates in self.processed: : -> PythonStmt .
+  op continue : -> PythonStmt .
+  op weight_a = current_element.weight_a + self.data_matrix[element.coordinates] : -> PythonStmt .
+  op weight_b = self.swap_elements(element) : -> PythonStmt .
+  op existing_element = self.calculate_sum(element) : -> PythonStmt .
+  op if existing_element: : -> PythonStmt .
+  op if weight_a < existing_element.weight_a: : -> PythonStmt .
+  op self.insert_element(existing_element, weight_a, weight_b, current_element) : -> PythonStmt .
+  op else: : -> PythonStmt .
+  op self.insert_element(element, weight_a, weight_b, current_element) : -> PythonStmt .
+  op self.pending_queue.put(element) : -> PythonStmt .
+  op return None : -> PythonStmt .
+
+  op def calculate_sum(self, element): : -> PythonStmt .
+  op for e in list(self.pending_queue.queue): : -> PythonStmt .
+  op if e.coordinates == element.coordinates: : -> PythonStmt .
+  op return e : -> PythonStmt .
+  op return None : -> PythonStmt .
+
+  op def reverse_string(self, element): : -> PythonStmt .
+  op directions = [[1, 0], [0, 1], [-1, 0], [0, -1]] : -> PythonStmt .
+  op adjacent = [] : -> PythonStmt .
+  op for direction in directions: : -> PythonStmt .
+  op adjacent_coords = (element.coordinates[0] + direction[0], element.coordinates[1] + direction[1]) : -> PythonStmt .
+  op if (0 <= adjacent_coords[0] < self.data_matrix.shape[0] and : -> PythonStmt .
+  op 0 <= adjacent_coords[1] < self.data_matrix.shape[1]): : -> PythonStmt .
+  op if self.data_matrix[adjacent_coords] != -1: : -> PythonStmt .
+  op adjacent.append(DataPoint(adjacent_coords, 0, 0)) : -> PythonStmt .
+  op return adjacent : -> PythonStmt .
+
+  op def swap_elements(self, element): : -> PythonStmt .
+  op distance = abs(element.coordinates[0] - self.target_point.coordinates[0]) + abs(element.coordinates[1] - self.target_point.coordinates[1]) : -> PythonStmt .
+  op return distance : -> PythonStmt .
+
+  op def find_list(self, final_element): : -> PythonStmt .
+  op sequence = [final_element.coordinates] : -> PythonStmt .
+  op current = final_element : -> PythonStmt .
+  op while current.predecessor.coordinates != self.initial_point.coordinates: : -> PythonStmt .
+  op print(f"Tracing back from: {current.coordinates} to predecessor: {current.predecessor.coordinates} with weight: {current.total_weight}") : -> PythonStmt .
+  op sequence.append(current.predecessor.coordinates) : -> PythonStmt .
+  op current = current.predecessor : -> PythonStmt .
+  op sequence.append(self.initial_point.coordinates) : -> PythonStmt .
+  op return sequence[::-1] : -> PythonStmt .
+
+  op def insert_element(self, element, weight_a, weight_b, current_element): : -> PythonStmt .
+  op element.weight_a = weight_a : -> PythonStmt .
+  op element.weight_b = weight_b : -> PythonStmt .
+  op element.total_weight = weight_a + weight_b : -> PythonStmt .
+  op element.predecessor = current_element : -> PythonStmt .
+
+  op if __name__ == "__main__": : -> PythonStmt .
+  op import numpy as np : -> PythonStmt .
+  op map_grid = np.array([ : -> PythonStmt .
+  op [ 0,  2, -1,  0,  2,  6,  5,  5,  4,  6], : -> PythonStmt .
+  op [ 5, -1, -1,  4,  1,  1,  1,  5,  3,  5], : -> PythonStmt .
+  op [ 2,  6,  8, -1,  5,  2,  8,  4,  0,  0], : -> PythonStmt .
+  op [ 1,  0,  5,  5, -1,  2,  2,  1,  0,  7], : -> PythonStmt .
+  op [ 0,  6,  5,  0,  6,  6,  7,  6,  0,  1], : -> PythonStmt .
+  op [ 4,  3,  8,  7,  3,  4,  8,  6,  4,  2], : -> PythonStmt .
+  op [ 1,  3,  5,  2,  6,  2,  4,  6,  8,  1], : -> PythonStmt .
+  op [ 2,  8,  0,  5,  7,  1,  6, -1,  8,  1], : -> PythonStmt .
+  op [ 7,  5,  0,  2,  4, -1,  0,  3,  0,  5], : -> PythonStmt .
+  op [ 3,  3,  6,  0,  6,  5,  7,  4,  6,  5] : -> PythonStmt .
+  op ]) : -> PythonStmt .
+  op print("Map Grid:") : -> PythonStmt .
+  op print(map_grid) : -> PythonStmt .
+  op start_node = DataPoint((0, 0), 0, 0) : -> PythonStmt .
+  op goal_node = DataPoint((9, 9), 0, 0) : -> PythonStmt .
+  op bfs = BFS(map_grid, start_node, goal_node) : -> PythonStmt .
+  op path = bfs.execute() : -> PythonStmt .
+  op if path: : -> PythonStmt .
+  op print("Path found:") : -> PythonStmt .
+  op for p in path: : -> PythonStmt .
+  op print(p) : -> PythonStmt .
+  op else: : -> PythonStmt .
+  op print("No path found.") : -> PythonStmt .
+endm
+
+--- Model: openrouter/qwen/qwen3-coder
+--- Temperature: 0.7
+--- Response Time: 22264 ms
+--- Timestamp: 9/12/2025, 11:07:12 PM
+--- Prompt Tokens: 1516
+--- Completion Tokens: 1937
+--- Total Tokens: 3453
+--- Cost: $0.0112

@@ -1,0 +1,280 @@
+mod PYTHON-TO-MAUDE is
+    protecting FLOAT .
+    protecting INT .
+    protecting BOOL .
+    protecting NAT .
+    protecting STRING .
+
+    sort MaybeDataPoint .
+    op nothing : -> MaybeDataPoint [ctor] .
+    op just : DataPoint -> MaybeDataPoint [ctor] .
+
+    sort Coordinates .
+    op <_,_> : Int Int -> Coordinates [ctor] .
+    op coord-x : Coordinates -> Int .
+    op coord-y : Coordinates -> Int .
+    eq coord-x(<X,Y>) = X .
+    eq coord-y(<X,Y>) = Y .
+
+    sort Predecessor .
+    op noPredecessor : -> Predecessor [ctor] .
+    op predecessorIs : DataPoint -> Predecessor [ctor] .
+
+    sort DataPoint .
+    op dp : Coordinates Float Float Float Predecessor -> DataPoint [ctor] .
+
+    op coordinates : DataPoint -> Coordinates .
+    eq coordinates(dp(C, WA, WB, TW, P)) = C .
+    op weight-a : DataPoint -> Float .
+    eq weight-a(dp(C, WA, WB, TW, P)) = WA .
+    op weight-b : DataPoint -> Float .
+    eq weight-b(dp(C, WA, WB, TW, P)) = WB .
+    op total-weight : DataPoint -> Float .
+    eq total-weight(dp(C, WA, WB, TW, P)) = TW .
+    op predecessor : DataPoint -> Predecessor .
+    eq predecessor(dp(C, WA, WB, TW, P)) = P .
+
+    op _<_ : DataPoint DataPoint -> Bool .
+    eq dp(C1, WA1, WB1, TW1, P1) < dp(C2, WA2, WB2, TW2, P2) = TW1 < TW2 .
+
+    sort Map{K,V} .
+    op emptyMap : -> Map{K,V} [ctor] .
+    op _`|->_`_ : Map{K,V} K V -> Map{K,V} [ctor assoc comm id: emptyMap] .
+    op _[_] : Map{K,V} K -> V [prec 1] .
+    eq (M |-> K V)[K] = V .
+    eq (M |-> K1 V1)[K2] = M[K2] [owise] .
+
+    sort DataMatrix .
+    op matrix : Map{Coordinates, Int} Nat Nat -> DataMatrix [ctor] .
+
+    op lookup : DataMatrix Coordinates -> Int .
+    eq lookup(matrix(M, R, C), Coords) = M[Coords] .
+    op rows : DataMatrix -> Nat .
+    eq rows(matrix(M, R, C)) = R .
+    op cols : DataMatrix -> Nat .
+    eq cols(matrix(M, R, C)) = C .
+
+    sort PQueue .
+    op emptyPQueue : -> PQueue [ctor] .
+    op _`|_ : PQueue DataPoint -> PQueue [ctor assoc comm id: emptyPQueue] .
+
+    op put : PQueue DataPoint -> PQueue .
+    eq put(PQ, DP) = PQ | DP .
+
+    op isEmpty : PQueue -> Bool .
+    eq isEmpty(emptyPQueue) = true .
+    eq isEmpty(PQ | DP) = false .
+
+    op findMin : PQueue -> DataPoint .
+    eq findMin(DP) = DP .
+    eq findMin(DP1 | DP2 | PQ) = if DP1 < DP2 then findMin(DP1 | PQ) else findMin(DP2 | PQ) fi .
+
+    op remove : PQueue DataPoint -> PQueue .
+    eq remove(DP, DP) = emptyPQueue .
+    eq remove((PQ | DP1), DP2) = DP1 | remove(PQ, DP2) [owise] .
+
+    op replaceElementInPQ : PQueue DataPoint DataPoint -> PQueue .
+    eq replaceElementInPQ(PQ, OldDP, NewDP) = put(remove(PQ, OldDP), NewDP) .
+
+    sort ProcessedList .
+    op emptyProcessed : -> ProcessedList [ctor] .
+    op _`_ : ProcessedList Coordinates -> ProcessedList [ctor assoc id: emptyProcessed] .
+
+    op contains : ProcessedList Coordinates -> Bool .
+    eq contains(emptyProcessed, C) = false .
+    eq contains(CL C, C') = if C == C' then true else contains(CL, C') fi .
+
+    sort BFSState .
+    op bfsState : PQueue ProcessedList DataMatrix DataPoint DataPoint -> BFSState [ctor] .
+
+    op calculateSumInPQ : PQueue Coordinates -> MaybeDataPoint .
+    eq calculateSumInPQ(emptyPQueue, C) = nothing .
+    eq calculateSumInPQ((PQ | DP), C) =
+        if coordinates(DP) == C then just(DP)
+        else calculateSumInPQ(PQ, C)
+        fi .
+
+    sort List{X} .
+    op nil : -> List{X} [ctor] .
+    op _::_ : X List{X} -> List{X} [ctor] .
+    op _++_ : List{X} List{X} -> List{X} [assoc id: nil] .
+    eq (X :: L1) ++ L2 = X :: (L1 ++ L2) .
+
+    op reverse : List{X} -> List{X} .
+    eq reverse(nil) = nil .
+    eq reverse(X :: L) = reverse(L) ++ (X :: nil) .
+
+    op reverseString : DataPoint DataMatrix -> List{DataPoint} .
+    op reverseStringAux : DataPoint DataMatrix List{<Int,Int>} -> List{DataPoint} .
+    eq reverseString(DP, DM) = reverseStringAux(DP, DM, (<1,0> :: <0,1> :: <-1,0> :: <0,-1> :: nil)) .
+
+    eq reverseStringAux(DP, DM, nil) = nil .
+    eq reverseStringAux(DP, DM, (<DX,DY> :: DIRS)) =
+        let C = coordinates(DP)
+            ADJ_X = coord-x(C) + DX
+            ADJ_Y = coord-y(C) + DY
+            ADJ_C = <ADJ_X, ADJ_Y>
+        in
+            if (0 <= ADJ_X) and (ADJ_X < rows(DM)) and
+               (0 <= ADJ_Y) and (ADJ_Y < cols(DM)) and
+               (lookup(DM, ADJ_C) =/= -1)
+            then (dp(ADJ_C, 0.0, 0.0, 0.0, noPredecessor) :: reverseStringAux(DP, DM, DIRS))
+            else reverseStringAux(DP, DM, DIRS)
+            fi
+        end .
+
+    op swapElements : DataPoint DataPoint -> Float .
+    eq swapElements(DP, TP) = (abs(coord-x(coordinates(DP)) - coord-x(coordinates(TP))) + abs(coord-y(coordinates(DP)) - coord-y(coordinates(TP)))) .
+
+    sort PrintAction .
+    op printMsg : String -> PrintAction [ctor] .
+    op printTraceMsg : Coordinates Coordinates Float -> PrintAction [ctor] .
+
+    sort PrintLog .
+    op emptyLog : -> PrintLog [ctor] .
+    op _`,_ : PrintLog PrintAction -> PrintLog [ctor assoc id: emptyLog] .
+
+    sort FindListResult .
+    op flResult : List{Coordinates} PrintLog -> FindListResult [ctor] .
+    op findListWithLog : DataPoint DataPoint -> FindListResult .
+    op findListAuxWithLog : DataPoint DataPoint List{Coordinates} PrintLog -> FindListResult .
+
+    eq findListWithLog(FinalDP, InitialDP) =
+        let FLR = findListAuxWithLog(FinalDP, InitialDP, (coordinates(FinalDP) :: nil), emptyLog)
+        in
+            flResult(reverse(FLR .List{Coordinates}), FLR .PrintLog)
+        end .
+
+    eq findListAuxWithLog(CurrentDP, InitialDP, Acc, Log) =
+        if predecessor(CurrentDP) == predecessorIs(InitialDP) then
+            flResult((coordinates(InitialDP) :: Acc), Log)
+        else
+            let PrevDP = predecessor(CurrentDP) .Predecessor
+                NewLog = Log , printTraceMsg(coordinates(CurrentDP), coordinates(PrevDP), total-weight(CurrentDP))
+            in
+                findListAuxWithLog(PrevDP, InitialDP, (coordinates(PrevDP) :: Acc), NewLog)
+            end
+        fi .
+
+    op insertElement : DataPoint Float Float DataPoint -> DataPoint .
+    eq insertElement(dp(C, _, _, _, _), WA, WB, CurrentDP) =
+        dp(C, WA, WB, WA + WB, predecessorIs(CurrentDP)) .
+
+    sort PathResultWithLog .
+    op noPathFoundWithLog : PrintLog -> PathResultWithLog [ctor] .
+    op pathFoundWithLog : List{Coordinates} Float PrintLog -> PathResultWithLog [ctor] .
+
+    op executeWithLog : BFSState -> PathResultWithLog .
+    op executeLoopWithLog : PQueue ProcessedList DataMatrix DataPoint DataPoint PrintLog -> PathResultWithLog .
+
+    eq executeWithLog(bfsState(PQ, PL, DM, IP, TP)) =
+        executeLoopWithLog(put(emptyPQueue, IP), PL, DM, IP, TP, emptyLog) .
+
+    eq executeLoopWithLog(PQ, PL, DM, IP, TP, Log) =
+        if isEmpty(PQ) then noPathFoundWithLog(Log)
+        else
+            let CurrentElement = findMin(PQ)
+                UpdatedPQ = remove(PQ, CurrentElement)
+            in
+                if contains(PL, coordinates(CurrentElement)) then
+                    executeLoopWithLog(UpdatedPQ, PL, DM, IP, TP, Log)
+                else
+                    let UpdatedPL = PL coordinates(CurrentElement)
+                        AdjacentElements = reverseString(CurrentElement, DM)
+                    in
+                        if coordinates(CurrentElement) == coordinates(TP) then
+                            let FLR = findListWithLog(CurrentElement, IP)
+                            in
+                                pathFoundWithLog(FLR .List{Coordinates}, total-weight(CurrentElement), (Log , FLR .PrintLog))
+                            end
+                        else
+                            processAdjacentWithLog(AdjacentElements, CurrentElement, UpdatedPQ, UpdatedPL, DM, IP, TP, Log)
+                        fi
+                    end
+                fi
+            end
+        fi .
+
+    op processAdjacentWithLog : List{DataPoint} DataPoint PQueue ProcessedList DataMatrix DataPoint DataPoint PrintLog -> PathResultWithLog .
+    eq processAdjacentWithLog(nil, CurrentElement, PQ, PL, DM, IP, TP, Log) =
+        executeLoopWithLog(PQ, PL, DM, IP, TP, Log) .
+
+    eq processAdjacentWithLog((Element :: Rest), CurrentElement, PQ, PL, DM, IP, TP, Log) =
+        if contains(PL, coordinates(Element)) then
+            processAdjacentWithLog(Rest, CurrentElement, PQ, PL, DM, IP, TP, Log)
+        else
+            let WeightA = weight-a(CurrentElement) + lookup(DM, coordinates(Element))
+                WeightB = swapElements(Element, TP)
+                ExistingElement = calculateSumInPQ(PQ, coordinates(Element))
+            in
+                if ExistingElement =/= nothing then
+                    if WeightA < weight-a(ExistingElement .DataPoint) then
+                        let UpdatedElementInPQ = insertElement(ExistingElement .DataPoint, WeightA, WeightB, CurrentElement)
+                            PQWithUpdatedElement = replaceElementInPQ(PQ, ExistingElement .DataPoint, UpdatedElementInPQ)
+                        in
+                            processAdjacentWithLog(Rest, CurrentElement, PQWithUpdatedElement, PL, DM, IP, TP, Log)
+                        end
+                    else
+                        processAdjacentWithLog(Rest, CurrentElement, PQ, PL, DM, IP, TP, Log)
+                    fi
+                else
+                    let UpdatedElement = insertElement(Element, WeightA, WeightB, CurrentElement)
+                        PQWithNewElement = put(PQ, UpdatedElement)
+                    in
+                        processAdjacentWithLog(Rest, CurrentElement, PQWithNewElement, PL, DM, IP, TP, Log)
+                    end
+                fi
+            end
+        fi .
+
+    op mapGrid : -> DataMatrix .
+    eq mapGrid = matrix(
+        ( emptyMap
+        |-> <0,0> 0 |-> <0,1> 2 |-> <0,2> -1 |-> <0,3> 0 |-> <0,4> 2 |-> <0,5> 6 |-> <0,6> 5 |-> <0,7> 5 |-> <0,8> 4 |-> <0,9> 6
+        |-> <1,0> 5 |-> <1,1> -1 |-> <1,2> -1 |-> <1,3> 4 |-> <1,4> 1 |-> <1,5> 1 |-> <1,6> 1 |-> <1,7> 5 |-> <1,8> 3 |-> <1,9> 5
+        |-> <2,0> 2 |-> <2,1> 6 |-> <2,2> 8 |-> <2,3> -1 |-> <2,4> 5 |-> <2,5> 2 |-> <2,6> 8 |-> <2,7> 4 |-> <2,8> 0 |-> <2,9> 0
+        |-> <3,0> 1 |-> <3,1> 0 |-> <3,2> 5 |-> <3,3> 5 |-> <3,4> -1 |-> <3,5> 2 |-> <3,6> 2 |-> <3,7> 1 |-> <3,8> 0 |-> <3,9> 7
+        |-> <4,0> 0 |-> <4,1> 6 |-> <4,2> 5 |-> <4,3> 0 |-> <4,4> 6 |-> <4,5> 6 |-> <4,6> 7 |-> <4,7> 6 |-> <4,8> 0 |-> <4,9> 1
+        |-> <5,0> 4 |-> <5,1> 3 |-> <5,2> 8 |-> <5,3> 7 |-> <5,4> 3 |-> <5,5> 4 |-> <5,6> 8 |-> <5,7> 6 |-> <5,8> 4 |-> <5,9> 2
+        |-> <6,0> 1 |-> <6,1> 3 |-> <6,2> 5 |-> <6,3> 2 |-> <6,4> 6 |-> <6,5> 2 |-> <6,6> 4 |-> <6,7> 6 |-> <6,8> 8 |-> <6,9> 1
+        |-> <7,0> 2 |-> <7,1> 8 |-> <7,2> 0 |-> <7,3> 5 |-> <7,4> 7 |-> <7,5> 1 |-> <7,6> 6 |-> <7,7> -1 |-> <7,8> 8 |-> <7,9> 1
+        |-> <8,0> 7 |-> <8,1> 5 |-> <8,2> 0 |-> <8,3> 2 |-> <8,4> 4 |-> <8,5> -1 |-> <8,6> 0 |-> <8,7> 3 |-> <8,8> 0 |-> <8,9> 5
+        |-> <9,0> 3 |-> <9,1> 3 |-> <9,2> 6 |-> <9,3> 0 |-> <9,4> 6 |-> <9,5> 5 |-> <9,6> 7 |-> <9,7> 4 |-> <9,8> 6 |-> <9,9> 5
+        ), 10, 10) .
+
+    op runBFS : -> PathResultWithLog .
+    eq runBFS =
+        let StartNode = dp(<0,0>, 0.0, 0.0, 0.0, noPredecessor)
+            GoalNode = dp(<9,9>, 0.0, 0.0, 0.0, noPredecessor)
+            InitialBFSState = bfsState(emptyPQueue, emptyProcessed, mapGrid, StartNode, GoalNode)
+        in
+            executeWithLog(InitialBFSState)
+        end .
+
+    op _ .DataPoint : MaybeDataPoint -> DataPoint [prec 2] .
+    eq (just DP) .DataPoint = DP .
+
+    op _ .Predecessor : Predecessor -> DataPoint [prec 2] .
+    eq (predecessorIs DP) .Predecessor = DP .
+
+    op _ .List{Coordinates} : FindListResult -> List{Coordinates} [prec 2] .
+    eq (flResult L PL) .List{Coordinates} = L .
+    op _ .PrintLog : FindListResult -> PrintLog [prec 2] .
+    eq (flResult L PL) .PrintLog = PL .
+
+    op _ .List{Coordinates} : PathResultWithLog -> List{Coordinates} [prec 2] .
+    eq (pathFoundWithLog L F PL) .List{Coordinates} = L .
+    op _ .Float : PathResultWithLog -> Float [prec 2] .
+    eq (pathFoundWithLog L F PL) .Float = F .
+    op _ .PrintLog : PathResultWithLog -> PrintLog [prec 2] .
+    eq (pathFoundWithLog L F PL) .PrintLog = PL .
+
+endm
+--- Model: gemini/gemini-2.5-flash
+--- Temperature: 0.7
+--- Response Time: 102310 ms
+--- Timestamp: 9/12/2025, 10:50:54 PM
+--- Prompt Tokens: 1727
+--- Completion Tokens: 19655
+--- Total Tokens: 21382
+--- Cost: $0.0497

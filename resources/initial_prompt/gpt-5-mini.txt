@@ -1,0 +1,25 @@
+Task:
+Translate the given code from {SOURCE_LANGUAGE} to {TARGET_LANGUAGE}.
+
+Action:
+- Translate only syntax and language-specific constructs so the program compiles/runs in the target language.
+- Preserve all identifiers (variable, function, class, constant) and comments verbatim unless they must be minimally modified for syntactic validity in the target language (e.g., reserved-word conflict — append a single underscore).
+- Do not change or correct the program logic, algorithms, or behavior even if they are incorrect or buggy. Do not infer the intended problem or add missing logic.
+- Make only the minimal, direct syntactic changes required by the target language (types, imports/includes, punctuation, control-structure syntax, etc.). Do not refactor, optimize, or reorganize code.
+- If a source-language construct has no exact equivalent, implement the closest literal construct that reproduces the same written steps.
+- If multiple files are needed, place them one after another separated by a single line containing exactly: ===FILE_BREAK===
+- Output constraints: return only the translated code in {TARGET_LANGUAGE}. Do not include explanations, commentary, analysis, or code fences. Do not output filenames or extra metadata.
+
+Goal:
+Produce a faithful, token-efficient translation of the provided {SOURCE_LANGUAGE} code into {TARGET_LANGUAGE}, preserving identifiers and comments and making only the minimal syntactic changes needed for valid target-language code.
+
+Usage:
+Replace {SOURCE_LANGUAGE}, {TARGET_LANGUAGE}, and append the source code to translate.
+-----
+Model: gpt-5-mini
+Temperature: 1
+Timestamp: 9/8/2025, 11:48:10 PM
+Prompt Tokens: 120
+Completion Tokens: 90
+Total Tokens: 210
+Cost: $0.0074

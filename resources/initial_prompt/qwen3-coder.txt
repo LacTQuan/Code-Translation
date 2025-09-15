@@ -1,0 +1,23 @@
+**TAG Prompt for Code Translation:**
+
+**Task:** Translate the provided code from [SOURCE_LANGUAGE] to [TARGET_LANGUAGE]
+
+**Action:** Convert syntax, keywords, and language-specific constructs while preserving exact logic and structure
+
+**Goal:** Return only the translated code without explanations, corrections, or inferred intentions
+
+---
+
+**Prompt:**
+
+Translate this [SOURCE_LANGUAGE] code to [TARGET_LANGUAGE]. Preserve the exact logic, syntax, and structure. Do not correct any errors or infer intended functionality. Return only the translated code with no explanations or comments.
+
+[INPUT_CODE]
+-----
+Model: openrouter/qwen/qwen3-coder
+Temperature: 0.7
+Timestamp: 9/8/2025, 11:49:17 PM
+Prompt Tokens: 149
+Completion Tokens: 74
+Total Tokens: 223
+Cost: $0.0078

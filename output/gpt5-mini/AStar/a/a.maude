@@ -1,0 +1,241 @@
+fmod BFS-TRANSLATION is
+  protecting INT .
+
+  sorts Coordinate DataPoint MaybeDP Queue Proc Matrix State SeqCoord MaybeResult .
+
+  op coord : Int Int -> Coordinate [ctor] .
+  op dp : Coordinate Int Int Int MaybeDP -> DataPoint [ctor] .
+  op none : -> MaybeDP [ctor] .
+  op some : DataPoint -> MaybeDP [ctor] .
+
+  op emptyQ : -> Queue [ctor] .
+  op _;_ : DataPoint Queue -> Queue [ctor assoc id: emptyQ] .
+
+  op emptyP : -> Proc [ctor] .
+  op pcons : Coordinate Proc -> Proc [ctor assoc id: emptyP] .
+
+  op state : Queue Proc Matrix DataPoint DataPoint -> State [ctor] .
+
+  op seqnil : -> SeqCoord [ctor] .
+  op _::_ : Coordinate SeqCoord -> SeqCoord [ctor assoc id: seqnil] .
+
+  op noneRes : -> MaybeResult [ctor] .
+  op someRes : SeqCoord Int -> MaybeResult [ctor] .
+
+  --- Accessors for DataPoint fields
+  op getCoords : DataPoint -> Coordinate .
+  op getWa : DataPoint -> Int .
+  op getWb : DataPoint -> Int .
+  op getTw : DataPoint -> Int .
+  op getPred : DataPoint -> MaybeDP .
+
+  vars X Y Z I J K L M N O P : Int .
+  vars C : Coordinate .
+  vars DP DP1 DP2 : DataPoint .
+  vars MD : MaybeDP .
+  vars Q Q1 Q2 : Queue .
+  vars PR PR1 : Proc .
+  vars MAT : Matrix .
+  vars INIT TARGET : DataPoint .
+  vars SSEQ : SeqCoord .
+  vars RES : MaybeResult .
+  vars ST : State .
+  vars HEAD TAIL : DataPoint .
+  vars ADJ : Queue .
+
+  --- DataPoint constructor accessor equations
+  eq getCoords(dp(C, I, J, K, MD)) = C .
+  eq getWa(dp(C, I, J, K, MD)) = I .
+  eq getWb(dp(C, I, J, K, MD)) = J .
+  eq getTw(dp(C, I, J, K, MD)) = K .
+  eq getPred(dp(C, I, J, K, MD)) = MD .
+
+  --- Priority queue utilities (queue stores DataPoint items; ordering by total_weight not enforced automatically)
+  op pq_empty : Queue -> Bool .
+  eq pq_empty(emptyQ) = true .
+  eq pq_empty(DP ; Q) = false .
+
+  --- Insert into queue preserving increasing total_weight (simple insertion to mirror PriorityQueue with __lt__)
+  op pq_put : Queue DataPoint -> Queue .
+  var TW : Int .
+  eq pq_put(emptyQ, DP) = DP ; emptyQ .
+  eq pq_put(HEAD ; TAIL, DP) =
+    if getTw(DP) < getTw(HEAD) then DP ; HEAD ; TAIL
+    else HEAD ; pq_put(TAIL, DP)
+    fi [owise] .
+
+  --- Get (pop) from queue: pattern-match usage in executeLoop
+  --- calculate_sum: find element in queue with same coordinates
+  op calculate_sum : Queue DataPoint -> MaybeDP .
+  eq calculate_sum(emptyQ, DP) = none [owise] .
+  eq calculate_sum(Q, DP) = calculate_sum_aux(Q, getCoords(DP)) [owise] .
+
+  op calculate_sum_aux : Queue Coordinate -> MaybeDP .
+  eq calculate_sum_aux(emptyQ, C) = none .
+  eq calculate_sum_aux((DP1 ; TAIL), C) =
+    if getCoords(DP1) == C then some(DP1) else calculate_sum_aux(TAIL, C) fi .
+
+  --- reverse_string: produce adjacent DataPoint list for cardinal neighbors if within bounds and matrix value != -1
+  --- We expose matrix access via get_matrix_value(MAT, i, j) (user-supplied matrix expected)
+  op get_matrix_value : Matrix Int Int -> Int .
+  --- The body of get_matrix_value is left abstract; in a concrete instantiation, equations for map_grid are expected.
+
+  op reverse_string : DataPoint Matrix -> Queue .
+  eq reverse_string(DP, MAT) = reverse_string_aux(getCoords(DP), MAT) .
+
+  op reverse_string_aux : Coordinate Matrix -> Queue .
+  vars X0 X1 : Int .
+  eq reverse_string_aux(coord(X0, X1), MAT) =
+    let A1 := (coord(X0 + 1, X1)) in
+    let A2 := (coord(X0, X1 + 1)) in
+    let A3 := (coord(X0 - 1, X1)) in
+    let A4 := (coord(X0, X1 - 1)) in
+    append_if_valid(A1, MAT, X0, X1, 1) ;
+    append_if_valid(A2, MAT, X0, X1, 2) ;
+    append_if_valid(A3, MAT, X0, X1, 3) ;
+    append_if_valid(A4, MAT, X0, X1, 4)
+    fi [owise] .
+
+  --- append_if_valid: helper that creates DataPoint(coord,0,0) if within bounds and matrix value != -1
+  op append_if_valid : Coordinate Matrix Int -> Queue .
+  vars CX CY : Int .
+  eq append_if_valid(coord(CX, CY), MAT, N) = 
+    if (0 <= CX) andBool (0 <= CY) then
+      if get_matrix_value(MAT, CX, CY) =/= -1 then dp(coord(CX, CY), 0, 0, 0, none) ; emptyQ
+      else emptyQ fi
+    else emptyQ fi [owise] .
+
+  --- swap_elements: Manhattan distance to target_point
+  op swap_elements : DataPoint DataPoint -> Int .
+  eq swap_elements(DP, TARGET) =
+    let C1 := getCoords(DP) in
+    let C2 := getCoords(TARGET) in
+    let X1 := firstCoord(C1) in
+    let Y1 := secondCoord(C1) in
+    let X2 := firstCoord(C2) in
+    let Y2 := secondCoord(C2) in
+    (abs(X1 - X2) + abs(Y1 - Y2)) .
+
+  op firstCoord : Coordinate -> Int .
+  op secondCoord : Coordinate -> Int .
+  eq firstCoord(coord(X, Y)) = X .
+  eq secondCoord(coord(X, Y)) = Y .
+
+  --- insert_element: set weights and predecessor on a DataPoint (returns updated DataPoint)
+  op insert_element : DataPoint Int Int DataPoint -> DataPoint .
+  eq insert_element(dp(C, WA, WB, TW, MD), WA_NEW, WB_NEW, CUR) =
+    dp(C, WA_NEW, WB_NEW, WA_NEW + WB_NEW, some(CUR)) [owise] .
+
+  --- find_list: trace back predecessors from final_element to initial_point, printing traces similarly to Python (printing represented by comments)
+  op find_list : DataPoint DataPoint -> SeqCoord .
+  eq find_list(FINAL, INIT) = find_list_aux(FINAL, INIT, (getCoords(FINAL) :: seqnil)) .
+
+  op find_list_aux : DataPoint DataPoint SeqCoord -> SeqCoord .
+  eq find_list_aux(CURRENT, INIT, SEQ) =
+    --- while current.predecessor.coordinates != self.initial_point.coordinates:
+    ---    print(f"Tracing back from: {current.coordinates} to predecessor: {current.predecessor.coordinates} with weight: {current.total_weight}")
+    ---    sequence.append(current.predecessor.coordinates)
+    ---    current = current.predecessor
+    let P := getPred(CURRENT) in
+    case P of
+      some(PDP) ->
+        if getCoords(PDP) =/= getCoords(INIT) then
+          find_list_aux(PDP, INIT, getCoords(PDP) :: SEQ)
+        else
+          getCoords(INIT) :: SEQ
+        fi
+    endcase .
+
+  --- execute: main loop
+  op execute : State -> MaybeResult .
+  eq execute(state(Q, PR, MAT, INIT, TARGET)) =
+    execute_loop(pq_put(Q, INIT), PR, MAT, INIT, TARGET) .
+
+  op execute_loop : Queue Proc Matrix DataPoint DataPoint -> MaybeResult .
+  --- If queue empty
+  eq execute_loop(emptyQ, PR, MAT, INIT, TARGET) = noneRes .
+  --- Pop head
+  eq execute_loop((HEAD ; TAIL), PR, MAT, INIT, TARGET) =
+    if proc_contains(PR, getCoords(HEAD)) then
+      execute_loop(TAIL, PR, MAT, INIT, TARGET)
+    else
+      let PR2 := pcons(getCoords(HEAD), PR) in
+      if getCoords(HEAD) == getCoords(TARGET) then
+        someRes(find_list(HEAD, INIT), getTw(HEAD))
+      else
+        --- get adjacent elements
+        let ADJ := reverse_string(HEAD, MAT) in
+        let NEWQ := process_adjacent(ADJ, TAIL, PR2, MAT, INIT, TARGET, HEAD) in
+        execute_loop(NEWQ, PR2, MAT, INIT, TARGET)
+      fi
+    fi .
+
+  --- proc_contains: check if coordinates in processed list
+  op proc_contains : Proc Coordinate -> Bool .
+  eq proc_contains(emptyP, C) = false .
+  eq proc_contains(pcons(C, PR), C) = true .
+  eq proc_contains(pcons(C1, PR), C2) = proc_contains(PR, C2) [owise] .
+
+  --- process_adjacent: iterate adjacent elements (queue of DataPoint) and update pending queue accordingly
+  op process_adjacent : Queue Queue Proc Matrix DataPoint DataPoint DataPoint -> Queue .
+  eq process_adjacent(emptyQ, PENDING, PR, MAT, INIT, TARGET, CUR) = PENDING .
+  eq process_adjacent((DP1 ; TAIL), PENDING, PR, MAT, INIT, TARGET, CUR) =
+    if proc_contains(PR, getCoords(DP1)) then
+      process_adjacent(TAIL, PENDING, PR, MAT, INIT, TARGET, CUR)
+    else
+      let WA := getWa(CUR) + get_matrix_value(MAT, firstCoord(getCoords(DP1)), secondCoord(getCoords(DP1))) in
+      let WB := swap_elements(DP1, TARGET) in
+      let EXIST := calculate_sum(PENDING, DP1) in
+      case EXIST of
+        some(EXDP) ->
+          if WA < getWa(EXDP) then
+            --- insert_element on existing element: replace in pending queue
+            process_adjacent_replace(TAIL, PENDING, EXDP, WA, WB, CUR, PR, MAT, INIT, TARGET)
+          else
+            process_adjacent(TAIL, PENDING, PR, MAT, INIT, TARGET, CUR)
+          fi
+      | none ->
+          let NEW := insert_element(DP1, WA, WB, CUR) in
+          process_adjacent(TAIL, pq_put(PENDING, NEW), PR, MAT, INIT, TARGET, CUR)
+      endcase
+    fi .
+
+  --- process_adjacent_replace: helper to replace existing element in queue with updated weights and predecessor
+  op process_adjacent_replace : Queue Queue DataPoint Int Int DataPoint Proc Matrix DataPoint DataPoint -> Queue .
+  eq process_adjacent_replace(TAIL, PENDING, EXDP, WA, WB, CUR, PR, MAT, INIT, TARGET) =
+    let UPDATED := insert_element(EXDP, WA, WB, CUR) in
+    replace_in_queue(PENDING, EXDP, UPDATED) .
+
+  --- replace_in_queue: replace first occurrence of a DataPoint with same coordinates by UPDATED
+  op replace_in_queue : Queue DataPoint DataPoint -> Queue .
+  eq replace_in_queue(emptyQ, EXDP, UPDATED) = emptyQ .
+  eq replace_in_queue((DPX ; T), EXDP, UPDATED) =
+    if getCoords(DPX) == getCoords(EXDP) then
+      UPDATED ; T
+    else
+      DPX ; replace_in_queue(T, EXDP, UPDATED)
+    fi .
+
+  --- Top-level map grid placeholder (user may instantiate get_matrix_value equations for this constant)
+  op map_grid : -> Matrix [ctor] .
+  eq get_matrix_value(map_grid, I, J) = 0 [owise] .
+
+  --- main imitation: build start and goal DataPoints and run execute (not executed automatically in Maude module)
+  op start_node : -> DataPoint .
+  op goal_node : -> DataPoint .
+  eq start_node = dp(coord(0, 0), 0, 0, 0, none) .
+  eq goal_node = dp(coord(9, 9), 0, 0, 0, none) .
+
+  op run_bfs : -> MaybeResult .
+  eq run_bfs = execute(state(emptyQ, emptyP, map_grid, start_node, goal_node)) .
+
+endfm
+
+--- Model: gpt-5-mini
+--- Temperature: 1
+--- Response Time: 86171 ms
+--- Timestamp: 9/12/2025, 10:28:30 PM
+--- Prompt Tokens: 1514
+--- Completion Tokens: 5796
+--- Total Tokens: 7310
+--- Cost: $0.0120

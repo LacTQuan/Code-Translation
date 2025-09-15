@@ -1,0 +1,102 @@
+Of course. As an expert LLM prompter, here is a precise and effective prompt using the TAG (Task–Action–Goal) framework designed for literal code translation.
+
+This template is structured to be robust, clear, and focused, ensuring the LLM adheres strictly to your constraints.
+
+### The TAG Prompt Template
+
+You can copy and paste this directly, filling in the `[PLACEHOLDER]` sections.
+
+```text
+###
+# TASK
+You are an expert, literal code-to-code translator. Your task is to translate a code snippet from a specified source language to a specified target language.
+
+# ACTION
+1.  **Analyze:** Read the provided code written in `[SOURCE LANGUAGE]`.
+2.  **Translate:** Perform a direct, one-to-one translation of the code into `[TARGET LANGUAGE]`.
+3.  **Preserve Logic:** This is the most critical rule. Translate the logic *exactly* as it is written. Do not correct logical errors, bugs, or inefficiencies. The translated code must be the logical equivalent of the original, including any flaws.
+4.  **Do Not Infer:** Do not infer the programmer's intent or the problem the code is meant to solve. Focus solely on the provided syntax and structure.
+5.  **Format Output:** Your entire response must consist *only* of the raw, translated code. Omit all explanations, introductory phrases (like "Here is the code..."), concluding remarks, and markdown code fences.
+
+# GOAL
+Generate a pure code output in `[TARGET LANGUAGE]` that is a direct, literal translation of the source code's logic and structure, with no modifications or extraneous text.
+###
+
+Source Language: `[SOURCE LANGUAGE]`
+Target Language: `[TARGET LANGUAGE]`
+
+Source Code:
+```[source_language_code_goes_here]
+[YOUR CODE HERE]
+```
+```
+
+---
+
+### Example Usage
+
+Here is an example of how you would fill out and use the template.
+
+**Your Input to the LLM:**
+
+```text
+###
+# TASK
+You are an expert, literal code-to-code translator. Your task is to translate a code snippet from a specified source language to a specified target language.
+
+# ACTION
+1.  **Analyze:** Read the provided code written in `Python`.
+2.  **Translate:** Perform a direct, one-to-one translation of the code into `JavaScript`.
+3.  **Preserve Logic:** This is the most critical rule. Translate the logic *exactly* as it is written. Do not correct logical errors, bugs, or inefficiencies. The translated code must be the logical equivalent of the original, including any flaws.
+4.  **Do Not Infer:** Do not infer the programmer's intent or the problem the code is meant to solve. Focus solely on the provided syntax and structure.
+5.  **Format Output:** Your entire response must consist *only* of the raw, translated code. Omit all explanations, introductory phrases (like "Here is the code..."), concluding remarks, and markdown code fences.
+
+# GOAL
+Generate a pure code output in `JavaScript` that is a direct, literal translation of the source code's logic and structure, with no modifications or extraneous text.
+###
+
+Source Language: `Python`
+Target Language: `JavaScript`
+
+Source Code:
+```python
+# This function has an off-by-one error and is inefficient, but translate it as-is.
+def get_even_numbers(limit):
+    result = []
+    i = 0
+    while i < limit - 1:
+        if i % 2 == 0:
+            result.append(i)
+        i = i + 1
+    return result
+
+print(get_even_numbers(10))
+```
+```
+
+**Expected LLM Output (and nothing else):**
+
+```javascript
+// This function has an off-by-one error and is inefficient, but translate it as-is.
+function getEvenNumbers(limit) {
+    const result = [];
+    let i = 0;
+    while (i < limit - 1) {
+        if (i % 2 === 0) {
+            result.push(i);
+        }
+        i = i + 1;
+    }
+    return result;
+}
+
+console.log(getEvenNumbers(10));
+```
+-----
+Model: gemini/gemini-2.5-pro
+Temperature: 0.7
+Timestamp: 9/8/2025, 11:37:13 PM
+Prompt Tokens: 92
+Completion Tokens: 76
+Total Tokens: 168
+Cost: $0.0048

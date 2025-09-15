@@ -1,0 +1,153 @@
+fmod DATA-POINT is
+    protecting INT .
+    protecting FLOAT .
+    sort Coordinates .
+    op <_,_> : Int Int -> Coordinates [ctor] .
+    sort DataPoint .
+    op dp : Coordinates Float Float Float DataPoint -> DataPoint [ctor] .
+    op nil : -> DataPoint [ctor] .
+    op _<_ : DataPoint DataPoint -> Bool .
+    var C C' : Coordinates .
+    var WA WA' WB WB' TW TW' : Float .
+    var PRED PRED' : DataPoint .
+    eq dp(C, WA, WB, TW, PRED) < dp(C', WA', WB', TW', PRED') = TW < TW' .
+endfm
+
+fmod BFS is
+    protecting DATA-POINT .
+    protecting INT .
+    protecting FLOAT .
+    protecting QID .
+    protecting LIST{DataPoint} .
+    protecting LIST{Coordinates} .
+    protecting MATRIX .
+
+    sort BFSState .
+    op bfs : PriorityQueue List{Coordinates} Matrix DataPoint DataPoint -> BFSState [ctor] .
+    op pending_queue :_ : PriorityQueue -> Attribute .
+    op processed :_ : List{Coordinates} -> Attribute .
+    op data_matrix :_ : Matrix -> Attribute .
+    op initial_point :_ : DataPoint -> Attribute .
+    op target_point :_ : DataPoint -> Attribute .
+
+    op execute : BFSState -> Pair[List{Coordinates}, Float] .
+    op calculate_sum : DataPoint PriorityQueue -> DataPoint .
+    op reverse_string : DataPoint Matrix -> List{DataPoint} .
+    op swap_elements : DataPoint DataPoint -> Float .
+    op find_list : DataPoint DataPoint -> List{Coordinates} .
+    op insert_element : DataPoint Float Float DataPoint -> DataPoint .
+
+    var PQ : PriorityQueue .
+    var L L' : List{Coordinates} .
+    var M : Matrix .
+    var IP TP CE EL : DataPoint .
+    var ADJ : List{DataPoint} .
+    var E : DataPoint .
+    var WA WB : Float .
+    var EX : DataPoint .
+
+    eq execute(bfs(PQ, L, M, IP, TP)) = 
+        if empty?(PQ) then undefined
+        else 
+            let CE = dequeue(PQ) in
+            if contains(L, coordinates(CE)) then execute(bfs(PQ, L, M, IP, TP))
+            else 
+                let L' = append(L, coordinates(CE)) in
+                if coordinates(CE) == coordinates(TP) then find_list(CE, IP), total_weight(CE)
+                else 
+                    let ADJ = reverse_string(CE, M) in
+                    process_adjacent(ADJ, CE, PQ, L', M, IP, TP)
+                fi
+            fi
+        fi .
+
+    op process_adjacent : List{DataPoint} DataPoint PriorityQueue List{Coordinates} Matrix DataPoint DataPoint -> Pair[List{Coordinates}, Float] .
+    eq process_adjacent(empty, CE, PQ, L, M, IP, TP) = execute(bfs(PQ, L, M, IP, TP)) .
+    eq process_adjacent(E ; ADJ, CE, PQ, L, M, IP, TP) = 
+        if contains(L, coordinates(E)) then process_adjacent(ADJ, CE, PQ, L, M, IP, TP)
+        else
+            let WA = weight_a(CE) + get(M, coordinates(E)) in
+            let WB = swap_elements(E, TP) in
+            let EX = calculate_sum(E, PQ) in
+            if EX =/= nil then
+                if WA < weight_a(EX) then
+                    let updated = insert_element(EX, WA, WB, CE) in
+                    process_adjacent(ADJ, CE, enqueue(updated, PQ), L, M, IP, TP)
+                else process_adjacent(ADJ, CE, PQ, L, M, IP, TP)
+                fi
+            else
+                let newDP = insert_element(E, WA, WB, CE) in
+                process_adjacent(ADJ, CE, enqueue(newDP, PQ), L, M, IP, TP)
+            fi
+        fi .
+
+    eq calculate_sum(EL, PQ) = find(λ x . coordinates(x) == coordinates(EL), elements(PQ)) .
+
+    op reverse_string : DataPoint Matrix -> List{DataPoint} .
+    eq reverse_string(CE, M) = 
+        let directions = << 1, 0 > ; < 0, 1 > ; < -1, 0 > ; < 0, -1 >> in
+        generate_adjacent(directions, CE, M) .
+
+    op generate_adjacent : List{Coordinates} DataPoint Matrix -> List{DataPoint} .
+    eq generate_adjacent(empty, CE, M) = empty .
+    eq generate_adjacent(< DX, DY > ; REST, CE, M) = 
+        let CX = x(coordinates(CE)) + DX in
+        let CY = y(coordinates(CE)) + DY in
+        if CX >= 0 and CX < rows(M) and CY >= 0 and CY < cols(M) and get(M, < CX, CY >) =/= -1 then
+            dp(< CX, CY >, 0.0, 0.0, 0.0, nil) ; generate_adjacent(REST, CE, M)
+        else generate_adjacent(REST, CE, M)
+        fi .
+
+    eq swap_elements(EL, TP) = 
+        let X1 = x(coordinates(EL)) in
+        let Y1 = y(coordinates(EL)) in
+        let X2 = x(coordinates(TP)) in
+        let Y2 = y(coordinates(TP)) in
+        float(abs(X1 - X2) + abs(Y1 - Y2)) .
+
+    op find_list : DataPoint DataPoint -> List{Coordinates} .
+    eq find_list(FE, IP) = 
+        let path = trace_back(FE, IP) in
+        reverse(path) .
+
+    op trace_back : DataPoint DataPoint -> List{Coordinates} .
+    eq trace_back(FE, IP) = 
+        if coordinates(predecessor(FE)) == coordinates(IP) then coordinates(IP) ; coordinates(FE)
+        else coordinates(FE) ; trace_back(predecessor(FE), IP)
+        fi .
+
+    eq insert_element(EL, WA, WB, CE) = 
+        dp(coordinates(EL), WA, WB, WA + WB, CE) .
+endfm
+
+fmod MAIN is
+    protecting BFS .
+    op map_grid : -> Matrix .
+    eq map_grid = 
+        [ [ 0,  2, -1,  0,  2,  6,  5,  5,  4,  6],
+          [ 5, -1, -1,  4,  1,  1,  1,  5,  3,  5],
+          [ 2,  6,  8, -1,  5,  2,  8,  4,  0,  0],
+          [ 1,  0,  5,  5, -1,  2,  2,  1,  0,  7],
+          [ 0,  6,  5,  0,  6,  6,  7,  6,  0,  1],
+          [ 4,  3,  8,  7,  3,  4,  8,  6,  4,  2],
+          [ 1,  3,  5,  2,  6,  2,  4,  6,  8,  1],
+          [ 2,  8,  0,  5,  7,  1,  6, -1,  8,  1],
+          [ 7,  5,  0,  2,  4, -1,  0,  3,  0,  5],
+          [ 3,  3,  6,  0,  6,  5,  7,  4,  6,  5] ] .
+
+    op start_node : -> DataPoint .
+    eq start_node = dp(< 0, 0 >, 0.0, 0.0, 0.0, nil) .
+    op goal_node : -> DataPoint .
+    eq goal_node = dp(< 9, 9 >, 0.0, 0.0, 0.0, nil) .
+
+    op run : -> Pair[List{Coordinates}, Float] .
+    eq run = execute(bfs(empty, empty, map_grid, start_node, goal_node)) .
+endfm
+--- Model: deepseek/deepseek-reasoner
+--- Temperature: 0.7
+--- Response Time: 357078 ms
+--- Timestamp: 9/10/2025, 10:16:16 PM
+--- Prompt Tokens: 1483
+--- Completion Tokens: 6788
+--- Total Tokens: 8271
+--- Cost: $0.0156

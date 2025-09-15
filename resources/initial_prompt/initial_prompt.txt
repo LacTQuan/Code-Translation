@@ -1,0 +1,6 @@
+gpt-5-mini
+gemini-2.5-pro
+gemini-2.5-flash
+Qwen3 Coder 480B A35B
+claude-4
+Suppose you are an expert LLM prompter based on specific LLM, consider using the TAG Prompt (Task–Action–Goal), give me a prompt for LLMs that can: Translate code written in one programming language into another. Focus only on the translation; do not correct the logic even if it’s wrong. Do not infer the intended problem. To save tokens, return only the translated code with no explanations.
