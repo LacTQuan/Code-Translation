@@ -9,10 +9,43 @@ code-translation/
 ├── code/
 │   ├── backend/          # FastAPI backend
 │   └── frontend/         # React + TypeScript frontend
-├── output/               # Generated translations
-├── resources/            # Prompts and sample code
+├── output/               # Generated translations by AI models
+│   ├── [model-name]/
+│   │   └── AStar/
+│   │       ├── misleading-names/    # Results from misleading naming approach
+│   │       ├── generic-names/       # Results from generic naming approach
+│   │       └── descriptive-names/   # Results from descriptive naming approach
+├── resources/            # Source code and prompts
+│   ├── initial_prompt/   # Model-specific prompts
+│   └── python-code/
+│       └── AStar/
+│           ├── misleading-names.py  # Source with confusing names
+│           ├── generic-names.py     # Source with generic names
+│           ├── descriptive-names.py # Source with clear names
+│           └── AStar.py             # Reference implementation
+├── NAMING_APPROACHES.md  # Detailed explanation of naming variants
 └── README.md
 ```
+
+## Research Context
+
+This project investigates how different naming conventions in source code affect AI-powered code translation quality. The research uses three distinct approaches to naming:
+
+1. **Misleading Names** (`misleading-names/`): Names that contradict actual behavior (e.g., a function called `BFS` that implements A*)
+2. **Generic Names** (`generic-names/`): Non-descriptive, generic identifiers (e.g., `ClassA`, `function1`)
+3. **Descriptive Names** (`descriptive-names/`): Clear, meaningful names that reflect actual purpose
+
+For detailed information about the naming approaches, see [`NAMING_APPROACHES.md`](NAMING_APPROACHES.md).
+
+## Features
+
+- **Multi-model Support**: Works with various AI providers (OpenAI, Gemini, DeepSeek, etc.)
+- **Real-time Translation**: Interactive chat interface for code translation
+- **Research Framework**: Systematic testing of naming convention impacts on translation quality
+- **Multiple Naming Approaches**: Three distinct variants for comprehensive analysis
+- **Usage Tracking**: Monitor API usage and costs
+- **Copy Functionality**: Easy copy-to-clipboard for generated code
+- **Responsive UI**: Modern React interface
 
 ## Prerequisites
 
