@@ -9,43 +9,10 @@ code-translation/
 ├── code/
 │   ├── backend/          # FastAPI backend
 │   └── frontend/         # React + TypeScript frontend
-├── output/               # Generated translations by AI models
-│   ├── [model-name]/
-│   │   └── AStar/
-│   │       ├── misleading-names/    # Results from misleading naming approach
-│   │       ├── generic-names/       # Results from generic naming approach
-│   │       └── descriptive-names/   # Results from descriptive naming approach
-├── resources/            # Source code and prompts
-│   ├── initial_prompt/   # Model-specific prompts
-│   └── python-code/
-│       └── AStar/
-│           ├── misleading-names.py  # Source with confusing names
-│           ├── generic-names.py     # Source with generic names
-│           ├── descriptive-names.py # Source with clear names
-│           └── AStar.py             # Reference implementation
-├── NAMING_APPROACHES.md  # Detailed explanation of naming variants
+├── output/               # Generated translations
+├── resources/            # Prompts and sample code
 └── README.md
 ```
-
-## Research Context
-
-This project investigates how different naming conventions in source code affect AI-powered code translation quality. The research uses three distinct approaches to naming:
-
-1. **Misleading Names** (`misleading-names/`): Names that contradict actual behavior (e.g., a function called `BFS` that implements A*)
-2. **Generic Names** (`generic-names/`): Non-descriptive, generic identifiers (e.g., `ClassA`, `function1`)
-3. **Descriptive Names** (`descriptive-names/`): Clear, meaningful names that reflect actual purpose
-
-For detailed information about the naming approaches, see [`NAMING_APPROACHES.md`](NAMING_APPROACHES.md).
-
-## Features
-
-- **Multi-model Support**: Works with various AI providers (OpenAI, Gemini, DeepSeek, etc.)
-- **Real-time Translation**: Interactive chat interface for code translation
-- **Research Framework**: Systematic testing of naming convention impacts on translation quality
-- **Multiple Naming Approaches**: Three distinct variants for comprehensive analysis
-- **Usage Tracking**: Monitor API usage and costs
-- **Copy Functionality**: Easy copy-to-clipboard for generated code
-- **Responsive UI**: Modern React interface
 
 ## Prerequisites
 
@@ -100,6 +67,7 @@ DEBUG=true
 ```
 
 ### 5. Run Backend Server
+*It's recommended to run the start_all.sh script*
 ```bash
 python -m app.main
 ```
@@ -122,6 +90,7 @@ npm install
 ```
 
 ### 3. Start Development Server
+*It's recommended to run the start_all.sh script*
 ```bash
 npm run dev
 ```
@@ -130,7 +99,10 @@ The frontend will be available at: **http://localhost:5173**
 
 ## Running Both Services
 
-### Option 1: Manual (Recommended for development)
+### Option 1: Using Provided Script (Recommended)
+A script `start_all.sh` is provided to start both backend and frontend together.
+
+### Option 2: Manual
 1. **Terminal 1** - Backend:
    ```bash
    cd code/backend
@@ -144,7 +116,7 @@ The frontend will be available at: **http://localhost:5173**
    npm run dev
    ```
 
-### Option 2: Using Process Manager (Optional)
+### Option 3: Using Process Manager (Optional)
 You can use tools like `concurrently` to run both services:
 
 ```bash
