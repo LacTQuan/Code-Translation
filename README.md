@@ -67,6 +67,7 @@ DEBUG=true
 ```
 
 ### 5. Run Backend Server
+*It's recommended to run the start_all.sh script*
 ```bash
 python -m app.main
 ```
@@ -89,6 +90,7 @@ npm install
 ```
 
 ### 3. Start Development Server
+*It's recommended to run the start_all.sh script*
 ```bash
 npm run dev
 ```
@@ -97,7 +99,10 @@ The frontend will be available at: **http://localhost:5173**
 
 ## Running Both Services
 
-### Option 1: Manual (Recommended for development)
+### Option 1: Using Provided Script (Recommended)
+A script `start_all.sh` is provided to start both backend and frontend together.
+
+### Option 2: Manual
 1. **Terminal 1** - Backend:
    ```bash
    cd code/backend
@@ -111,7 +116,7 @@ The frontend will be available at: **http://localhost:5173**
    npm run dev
    ```
 
-### Option 2: Using Process Manager (Optional)
+### Option 3: Using Process Manager (Optional)
 You can use tools like `concurrently` to run both services:
 
 ```bash
